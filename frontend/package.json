@@ -1,0 +1,43 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint --max-warnings 0",
+    "check-types": "next typegen && tsc --noEmit",
+    "generate-api": "pnpm dlx openapi-typescript http://localhost:8084/openapi.json -o types/api-v1.d.ts"
+  },
+  "dependencies": {
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@xyflow/react": "^12.10.1",
+    "bcrypt": "^6.0.0",
+    "ioredis": "^5.10.0",
+    "lucide-react": "^0.577.0",
+    "next": "16.1.5",
+    "next-auth": "^4.24.13",
+    "nodemailer": "^8.0.2",
+    "openapi-fetch": "^0.17.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "resend": "^6.9.4",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^22.15.3",
+    "@types/nodemailer": "^7.0.11",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.1",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
+    "typescript": "5.9.2"
+  }
+}

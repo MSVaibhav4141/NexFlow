@@ -1,0 +1,18 @@
+@import "tailwindcss";
+/* This targets the actual line inside your edge when the class is active */
+.ai-path-active .react-flow__edge-path {
+  stroke: #d946ef !important; /* Forces the Magenta color */
+  stroke-width: 3;
+  
+  /* The "Laser" Glow Effect */
+  filter: drop-shadow(0 0 5px #d946ef) drop-shadow(0 0 10px #d946ef) !important;
+  
+  /* Optional: Make the dots move faster for AI data transfer */
+  stroke-dasharray: 10;
+  animation: react-flow__dashdraw 0.5s linear infinite !important;
+}
+
+/* Ensure the arrowhead (marker) also turns Magenta */
+.ai-path-active marker path {
+  fill: #d946ef !important;
+}

@@ -1,0 +1,36 @@
+[project]
+name = "automatex"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.4",
+    "cuid2>=2.0.1",
+    "fastapi>=0.135.1",
+    "psycopg2-binary>=2.9.11",
+    "pydantic[email]>=2.12.5",
+    "pydantic-settings>=2.13.1",
+    "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0.48",
+    "uvicorn[standard]>=0.41.0",
+    "passlib>=1.7.4",
+    "httpx>=0.28.1",
+    "langgraph>=1.1.3",
+    "langchain-groq>=1.1.2",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "ruff>=0.15.6",
+]
+
+[tool.uvicorn]
+app = "app.main:app"
+host = "0.0.0.0"
+port = 8080
+reload = true
+
+# [project.scripts]
+# dev = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8080"
