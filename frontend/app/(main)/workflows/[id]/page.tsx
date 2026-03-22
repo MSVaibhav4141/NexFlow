@@ -3,6 +3,8 @@ import WorkflowCanvas from "./canvas";
 import  { redirect } from "next/navigation";
 import { Edge, Node } from "@xyflow/react";
 import { api } from "@/lib/api";
+import { getServerSession } from "next-auth";
+import { authOption } from "@/lib/authOption";
 export const metadata = {
   title: "Editing Workflow | AutomateX",
 };
@@ -20,8 +22,16 @@ export default async function SingleWorkflowPage({
   if(!workflow.id){
     redirect("/workflows")
   }
-  
+  const token = (await getServerSession(authOption))?.user.encoded
+
+  console.log(token,"YES THIS IS THE ONE")
+  if(!token){
+    return
+  }
   const {error, data} = await api.GET("/api/v0/workflows/wokflow/{id}", {
+    headers:{
+            authorization:`Bearer ${token}`
+      },
     params:{
       path:{id:workflow.id}
     }

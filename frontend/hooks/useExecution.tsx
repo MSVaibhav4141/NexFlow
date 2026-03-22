@@ -31,6 +31,7 @@ const clearStatuses = useWorkflowStore((state) => state.clearStatuses);
       });
       
       if(error){
+        console.log(error)
         throw new Error("cant make exec")
       }
       setExecutionId(data.execution_id); // Save the ID so the WebSocket can connect!
@@ -49,9 +50,10 @@ const clearStatuses = useWorkflowStore((state) => state.clearStatuses);
 
   useEffect(() => {
     if (!executionId) return;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8084";
 
-    const ws = new WebSocket(`ws://localhost:8084/api/v0/execution/ws/${executionId}`);
-
+    const wsUrl = baseUrl.replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsUrl}/api/v0/execution/ws/${executionId}`);
     ws.onopen = () => console.log("Connected to execution stream!");
 
     ws.onmessage = (event) => {

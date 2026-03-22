@@ -14,11 +14,13 @@ import {
   PanelLeftClose,
   Zap
 } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
-
-  const navItems = [
+  const [toggleButton, setToogle] = useState(false)
+  const navItems = [  
     { name: "Overview", href: "/dashboard", icon: Home },
     { name: "Workflows", href: "/workflows", icon: FolderKanban },
     { name: "AI Agents", href: "/ai-agents", icon: Bot, isNew: true },
@@ -105,8 +107,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-white/5 p-4">
-        <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3">
+      <div className="border-t border-white/5 p-4 cursor-pointer"onClick={() => {setToogle(prev => !prev)}}>
+            <button className={`text-sm font-medium text-white w-full bg-white/5 ${toggleButton ? "p-3" : "h-0 p-0 "}  rounded-xl mb-1 overflow-hidden transition-all`} onClick={() => signOut()}>Logout</button>
+        <div className="flex items-center gap-3 rounded-xl bg-white/5 p-3 relative">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white">
             V
           </div>

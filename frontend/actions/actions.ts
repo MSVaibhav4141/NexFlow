@@ -6,7 +6,7 @@ import { Edge, Node } from "@xyflow/react";
 import { redis } from "@/lib/redis";
 import { api } from "@/lib/api";
 import { getServerSession } from "next-auth";
-import { authOption } from "@/app/api/auth/[...nextauth]/route";
+import { authOption } from "@/lib/authOption";
 
 
 export const verifyOtpRequest = async({otp, email}: {otp:string, email:string}) => {
