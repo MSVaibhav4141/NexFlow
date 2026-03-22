@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { EmailSignupSchema, OtpVerificationSchema, RegisterUser } from "@/types";
 import { sendOtpOverEmail } from "@/lib/EmailService";
 import { registerUser, verifyOtpRequest } from "../actions/actions";
+import { useRouter } from "next/navigation";
 // import { sendOtpAction, verifyOtpAction } from "@/app/actions/auth-actions";
 import {api} from "@/lib/api"
 import { signIn } from "next-auth/react";
@@ -11,6 +12,7 @@ import { signIn } from "next-auth/react";
 type Step = "EMAIL" | "OTP" | "DETAILS";
 
 export default function RegisterFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("EMAIL");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +25,7 @@ export default function RegisterFlow() {
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // --- STEP 1: Email Logic ---
-  const handleFinalSubmit = async (e: React.FormEvent) => {
+const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
@@ -33,30 +35,32 @@ export default function RegisterFlow() {
       return;
     }
 
-
-    // Call your server action here
-
-    const payload = 
-    {accountName:accName,
+    const payload = {
+      accountName: accName,
       name,
       password,
       email,
-      redirect:false
+      redirect: false
+    };
 
+    setIsLoading(true);
+
+    try {
+      await registerUser(payload);
+      const res = await signIn('credentials', payload);
+
+      if (res?.error) {
+        setError("Some error occurred");
+        setIsLoading(false);
+      } else if (res?.ok) {
+        router.push("/dashboard"); 
+      }
+      
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to register. You might already have an account.");
+      setIsLoading(false);
     }
-
-    setIsLoading(true)
-
-    await registerUser(payload)
-    const res = await signIn('credentials',
-      payload,
-    )
-
-    if (res?.error) {
-    setError("Invalid email or password.");
-  }
-
-    setIsLoading(false);
   };
 
 
