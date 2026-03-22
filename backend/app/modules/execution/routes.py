@@ -52,7 +52,7 @@ async def execution_websocket_endpoint(websocket: WebSocket, execution_id: str):
         ws_manager.disconnect(websocket, execution_id)
 
 @router.get("/resume")
-async def resume_workflow_webhook(
+async def resume_workflow_webhook(\
     execution_id: str, 
     node_id: str, 
     action: str, 
