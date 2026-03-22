@@ -43,13 +43,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_workflows_id'), 'workflows', ['id'], unique=False)
-    op.drop_index(op.f('User_accountName_key'), table_name='User')
-    op.drop_index(op.f('User_email_key'), table_name='User')
-    op.drop_index(op.f('User_id_key'), table_name='User')
-    op.drop_table('User')
-    op.drop_index(op.f('Workflow_id_key'), table_name='Workflow')
-    op.drop_table('Workflow')
-    op.drop_table('_prisma_migrations')
+    # op.drop_index(op.f('User_accountName_key'), table_name='User')
+    # op.drop_index(op.f('User_email_key'), table_name='User')
+    # op.drop_index(op.f('User_id_key'), table_name='User')
+    # op.drop_table('User')
+    # op.drop_index(op.f('Workflow_id_key'), table_name='Workflow')
+    # op.drop_table('Workflow')
+    # op.drop_table('_prisma_migrations')
     # ### end Alembic commands ###
 
 
