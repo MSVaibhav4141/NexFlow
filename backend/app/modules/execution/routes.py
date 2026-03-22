@@ -11,7 +11,7 @@ router = APIRouter(prefix='/execution',tags=["Execution"])
 
 # ... your existing @router.post("/start") route goes here ...
 
-@router.post("/start", response_model=ExecutionResponse)
+@router.post("/start", response_model=ExecutionResponse,)
 async def start_execution(
     payload: ExecutionStartRequest,
     background_tasks: BackgroundTasks,

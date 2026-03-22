@@ -19,6 +19,5 @@ class Workflow(Base):
     createdAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda:datetime.now(UTC))
     updatedAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=lambda:datetime.now(UTC))
     user_id : Mapped[str] = mapped_column(ForeignKey("users.id", ondelete='CASCADE'))
-
     execution:Mapped[list[Execution]] = relationship("Execution", back_populates="workflow")
     user: Mapped["User"] = relationship("User", back_populates='workflows')

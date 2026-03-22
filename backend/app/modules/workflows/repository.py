@@ -5,8 +5,8 @@ from sqlalchemy.dialects.postgresql import insert
 
 class WorkflowRepository:
 
-    def get(self, db: Session, workflow_id: str):
-        return db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    def get(self, db: Session, workflow_id: str, user_id:str):
+        return db.query(Workflow).filter(Workflow.id == workflow_id and Workflow.user_id == user_id).first()
 
     def list(self, db: Session, skip: int = 0, limit: int = 100):
         return db.query(Workflow).offset(skip).limit(limit).all()
@@ -18,8 +18,8 @@ class WorkflowRepository:
         db.refresh(db_workflow)
         return db_workflow
 
-    def delete(self, db: Session, workflow_id: str):
-        workflow = self.get(db, workflow_id)
+    def delete(self, db: Session, workflow_id: str, user_id:str):
+        workflow = self.get(db, workflow_id, user_id)
         if workflow:
             db.delete(workflow)
             db.commit()

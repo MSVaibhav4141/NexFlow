@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .schema import UserCreate, UserResposne, UserAvailabilityResponse, UserLoginRequest
+from .schema import UserCreate,UserResposne, UserAvailabilityResponse, UserLoginRequest
 from .services import UserService
 from fastapi import Depends, status
 from sqlalchemy.orm import Session
@@ -21,7 +21,6 @@ def create_valid_user(user_payload: UserCreate,
 def user_login(login_payload: UserLoginRequest, 
                service:UserService = Depends(user_service), 
                db:Session = Depends(get_db)):
-    print(login_payload)
     user = service.user_login(db=db, login_payload=login_payload)
     return user 
     

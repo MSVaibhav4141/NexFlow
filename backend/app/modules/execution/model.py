@@ -21,3 +21,4 @@ class Execution(Base):
     createdAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     completedAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     workflow: Mapped["Workflow"] = relationship("Workflow", back_populates="execution")
+    accountName: Mapped[str] = mapped_column(String, unique=True, nullable=False)

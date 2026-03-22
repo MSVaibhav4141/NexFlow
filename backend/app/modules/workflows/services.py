@@ -11,8 +11,8 @@ class WorkflowServices:
         self.repo.upsert(db=db, workflow_payload=workflow_payload)
         return WorkflowUpdateMessage(success=True, mssg="Workflow Successfully Saved")
 
-    def get_by_id(self, db:Session, wokflow_id:str):
-        workflow = self.repo.get(db=db, workflow_id=wokflow_id)
+    def get_by_id(self, db:Session, wokflow_id:str, user_id:str):
+        workflow = self.repo.get(db=db, workflow_id=wokflow_id, user_id=user_id)
 
         if not workflow:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
