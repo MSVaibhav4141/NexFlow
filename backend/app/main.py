@@ -14,6 +14,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"^https://.*\.nexflow\.vaibhavr\.xyz$|^http://.*\.localhost\.direct:3002$|^http://localhost:3002$",
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, OPTIONS, etc.)
