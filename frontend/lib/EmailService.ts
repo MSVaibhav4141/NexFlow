@@ -10,7 +10,7 @@ import { redis } from "./redis";
 import { htmlMessage, textMessage } from "../template/EmailTemplate"; 
 import { OtpEmailTemplate } from "@/components/emai-form"; 
 
-const isProd = process.env.ENVIROMENT === 'PROD';
+const isProd = process.env.NODE_ENV === 'production';
 
 const transporter = nodemailer.createTransport({
   host: "smtp.ethereal.email",
