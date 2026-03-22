@@ -8,8 +8,8 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 app = FastAPI()
 
 origins = [
-    "http://localhost:3002",  # Your Next.js frontend
-    # "https://your-production-domain.com" # You will add this later when deploying!
+    "http://localhost:3002",
+    "http://localhost.direct:3002"
 ]
 
 app.add_middleware(
