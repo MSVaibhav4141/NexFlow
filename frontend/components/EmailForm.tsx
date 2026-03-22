@@ -40,15 +40,22 @@ export default function RegisterFlow() {
     {accountName:accName,
       name,
       password,
-      email
+      email,
+      redirect:false
+
     }
 
     setIsLoading(true)
 
     await registerUser(payload)
-    await signIn('credentials',
-      payload
+    const res = await signIn('credentials',
+      payload,
     )
+
+    if (res?.error) {
+    setError("Invalid email or password.");
+  }
+
     setIsLoading(false);
   };
 

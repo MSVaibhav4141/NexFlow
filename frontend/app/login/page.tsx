@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -26,10 +25,23 @@ export default function LoginPage() {
       
       // Simulating a network request
 
-      await signIn('credentials', {
+      const res = await signIn('credentials', {
         email,
-        password
+        password,
+        redirect:false
       }); 
+
+      if (res?.error) {
+    // Instead of redirecting, you can now set a React state to show a red error banner!
+    setError("Invalid email or password.");
+    setIsLoading(false)
+    return;
+  }
+
+  if (res?.ok) {
+    // Manually push them to the dashboard if successful
+    router.push("/dashboard"); 
+  }
 
       // If successful, push them to the canvas!
       router.push("/dashboard"); 

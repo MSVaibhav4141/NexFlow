@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
     // You can pass any HTML attribute to the <input> tag through the object.
     credentials: {
       email: { label: "Username", type: "text", placeholder: "jsmith" },
-      password: { label: "Password", type: "password" }
+      password: { label: "Password", type: "password" },
     },
     async authorize(credentials, req) {
 
@@ -55,7 +55,7 @@ import { api } from "@/lib/api";
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         domain: process.env.NODE_ENV === 'production' 
-          ? '.nexflow.vms.xyz' 
+          ? '.nexflow.vaibhavr.xyz' 
           : '.localhost.direct'
       }
     }
