@@ -140,6 +140,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v0/execution/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Webhook Config */
+        post: operations["save_webhook_config_api_v0_execution_config_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v0/execution/{webhook_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trigger Webhook Get */
+        get: operations["trigger_webhook_get_api_v0_execution__webhook_id__get"];
+        put?: never;
+        /** Trigger Webhook Post */
+        post: operations["trigger_webhook_post_api_v0_execution__webhook_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v0/execution/form/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Form Config */
+        post: operations["save_form_config_api_v0_execution_form_config_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v0/execution/form/{form_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Form Schema */
+        get: operations["get_form_schema_api_v0_execution_form__form_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v0/execution/form/{form_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Form */
+        post: operations["submit_form_api_v0_execution_form__form_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -166,6 +252,42 @@ export interface components {
             trigger_data: {
                 [key: string]: unknown;
             };
+        };
+        /** FormConfigResponse */
+        FormConfigResponse: {
+            /** Form Id */
+            form_id: string;
+            /** Form Title */
+            form_title: string | null;
+            /** Form Description */
+            form_description: string | null;
+            /** Form Elements */
+            form_elements: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** FormSaveRequest */
+        FormSaveRequest: {
+            /** Workflow Id */
+            workflow_id: string;
+            /** Node Id */
+            node_id: string;
+            /** Form Title */
+            form_title?: string | null;
+            /** Form Description */
+            form_description?: string | null;
+            /**
+             * Form Elements
+             * @default []
+             */
+            form_elements: unknown[];
+        };
+        /** FormSaveResponse */
+        FormSaveResponse: {
+            /** Form Id */
+            form_id: string;
+            /** Url */
+            url: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -220,6 +342,29 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WebhookResponse */
+        WebhookResponse: {
+            /** Message */
+            message: string;
+            /** Webhook Id */
+            webhook_id: string;
+            /** Method */
+            method: string;
+            /** Url */
+            url: string;
+        };
+        /** WebhookSaveRequest */
+        WebhookSaveRequest: {
+            /** Workflow Id */
+            workflow_id: string;
+            /** Node Id */
+            node_id: string;
+            /**
+             * Method
+             * @default POST
+             */
+            method: string;
         };
         /** WorkflowResponse */
         WorkflowResponse: {
@@ -511,6 +656,200 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_webhook_config_api_v0_execution_config_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebhookSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_webhook_get_api_v0_execution__webhook_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trigger_webhook_post_api_v0_execution__webhook_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_form_config_api_v0_execution_form_config_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_form_schema_api_v0_execution_form__form_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                form_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_form_api_v0_execution_form__form_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                form_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

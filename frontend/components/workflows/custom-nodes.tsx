@@ -35,6 +35,7 @@ function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, bord
     console.log("Executing specific node:", data.id);
   };
 
+  
   return (
     <div 
       onClick={() => openSettings(data.id)}
@@ -79,11 +80,10 @@ function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, bord
         <span className="text-xs text-gray-400 truncate max-w-[150px]">{data.description as string}</span>
       </div>
 
-      <Handle type="source" position={Position.Right} className="h-4 w-4 border-4 border-[#121216] bg-indigo-400" />
+      <Handle type="source" position={Position.Right} className="z-1 h-4 w-4 border-4 border-[#121216] bg-indigo-400" />
 
       {/* Quick Add Button */}
-      {!isConnected && (
-        <div className="absolute -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute z-0 -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
           <div className="h-0.5 w-4 bg-indigo-500/50" />
           <button 
             onClick={(e) => { e.stopPropagation(); openDrawer(data.id); }}
@@ -92,7 +92,7 @@ function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, bord
             <Plus className="h-4 w-4" />
           </button>
         </div>
-      )}
+    
     </div>
   );
 }
@@ -114,7 +114,6 @@ function BaseActionNode({ data, selected, icon: Icon, colorClass, bgClass }: any
   const { openDrawer, openSettings } = useContext(WorkflowContext);
   const { deleteElements } = useReactFlow();
   const sourceConnections = useHandleConnections({ type: "source" });
-  const isConnected = sourceConnections.length > 0;
 
   // 1. Grab the execution status from Zustand
   const status = useWorkflowStore((state) => state.nodeStatuses[data.id]);
@@ -195,7 +194,6 @@ function BaseActionNode({ data, selected, icon: Icon, colorClass, bgClass }: any
       <Handle type="source" position={Position.Right} className="h-4 w-4 border-4 border-[#121216] bg-indigo-400" />
 
       {/* Quick Add Button */}
-      {!isConnected && (
         <div className="absolute -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
           <div className="h-0.5 w-4 bg-indigo-500/50" />
           <button 
@@ -205,7 +203,7 @@ function BaseActionNode({ data, selected, icon: Icon, colorClass, bgClass }: any
             <Plus className="h-4 w-4" />
           </button>
         </div>
-      )}
+    
     </div>
   );
 }
@@ -217,8 +215,7 @@ export function IfElseNode({ id, data, selected }: NodeProps) {
 
   const connectionsTrue = useHandleConnections({ type:"source", id:"true" });
   const connectionsFalse = useHandleConnections({ type:"source", id:"false" });
-  const isConnectedTrue = connectionsTrue.length > 0;
-  const isConnectedFalse = connectionsFalse.length > 0;
+ 
 
   // 1. Grab the execution status from Zustand
   const status = useWorkflowStore((state) => state.nodeStatuses[id]);
@@ -284,7 +281,6 @@ export function IfElseNode({ id, data, selected }: NodeProps) {
       <div className="flex flex-col py-2">
         {/* TRUE BRANCH */}
         <div className="relative flex items-center justify-between px-4 py-3">
-          {!isConnectedTrue && (
               <div className="absolute -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
           <div className="h-0.5 w-4 bg-orange-500/30" />
           <button 
@@ -294,7 +290,6 @@ export function IfElseNode({ id, data, selected }: NodeProps) {
             <Plus className="h-4 w-4" />
           </button>
         </div>  
-          )}
           <span className="text-[11px] font-bold tracking-widest text-green-500 uppercase">True</span>
           <Handle 
             type="source" 
@@ -306,7 +301,6 @@ export function IfElseNode({ id, data, selected }: NodeProps) {
 
         {/* FALSE BRANCH */}
         <div className="relative flex items-center justify-between px-4 py-3 border-t border-white/5">
-          {!isConnectedFalse && (
             <div className="absolute -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
           <div className="h-0.5 w-4 bg-orange-500/30" />
           <button 
@@ -316,7 +310,7 @@ export function IfElseNode({ id, data, selected }: NodeProps) {
             <Plus className="h-4 w-4" />
           </button>
         </div>
-          )}
+    
           <span className="text-[11px] font-bold tracking-widest text-red-500 uppercase">False</span>
           <Handle 
             type="source" 
@@ -355,8 +349,6 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
   const { openDrawer, openSettings } = useContext(WorkflowContext);
   
   // 1. Trace Connections to decide whether to show the "+" buttons
-  const connectionsRight = useHandleConnections({ type:"source" });
-  const isConnectedRight = connectionsRight.length > 0;
 
   const connectionsModel = useHandleConnections({ type:"source", id:"chatModel" });
   const isConnectedModel = connectionsModel.length > 0;
@@ -364,8 +356,6 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
   const connectionsMemory = useHandleConnections({ type:"source", id:"memory" });
   const isConnectedMemory = connectionsMemory.length > 0;
   
-  const connectionsTool = useHandleConnections({ type:"source", id:"tool" });
-  const isConnectedTool = connectionsTool.length > 0;
 
   // 2. Grab the execution status from Zustand
   const status = useWorkflowStore((state) => state.nodeStatuses[id]);
@@ -436,7 +426,6 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
         />
         
         {/* Quick Add Button */}
-        {!isConnectedRight && (
           <div className="absolute -right-10 top-1/2 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100">
             <div className="h-0.5 w-4 bg-indigo-500/30" />
             <button 
@@ -446,7 +435,7 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-        )}
+      
       </div>
 
       {/* THE BOTTOM HANDLES SECTION */}
@@ -498,7 +487,6 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
 
         {/* TOOL BRANCH */}
         <div className="relative flex items-center justify-between px-4 py-2 border-t border-white/5">
-          {!isConnectedTool && (
             <div className="absolute -bottom-13 left-1/2 flex flex-col -translate-x-1/2 justify-center items-center opacity-0 transition-opacity group-hover:opacity-100">
                <div className="h-7 w-0.5 bg-green-500/30" />
               <button 
@@ -508,7 +496,7 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-          )}
+          
           <span className="text-[10px] font-bold uppercase text-gray-400">Tool</span>
           <Handle 
             type="source" 

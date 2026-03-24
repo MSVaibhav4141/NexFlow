@@ -1,105 +1,122 @@
 import { api } from "@/lib/api";
 import { useWorkflowStore } from "@/store/useWorkflowStore";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
-export function useExecution() {
+export function useExecution(workflowId: string) {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  
-  // This stores the memory: { "node_1": { "status": "success", ... } }
   const [nodeOutputs, setNodeOutputs] = useState<Record<string, any>>({});
-  
+  const wsRef = useRef<WebSocket | null>(null); // ← track WS instance
+
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const setNodeStatus = useWorkflowStore((state) => state.setNodeStatus);
-        const setAiHighlight = useWorkflowStore((state) => state.setAiHighlight);
+  const setAiHighlight = useWorkflowStore((state) => state.setAiHighlight);
+  const clearStatuses = useWorkflowStore((state) => state.clearStatuses);
 
-const clearStatuses = useWorkflowStore((state) => state.clearStatuses);
-  // 1. Function to start the execution via REST API
-  const startExecution = async (workflowId: string, triggerNodeId: string) => {
+  const actionsRef = useRef({ updateNodeData, setNodeStatus, setAiHighlight, clearStatuses });
+useEffect(() => {
+  actionsRef.current = { updateNodeData, setNodeStatus, setAiHighlight, clearStatuses };
+});
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8084";
+  const wsUrl = baseUrl.replace(/^http/, "ws");
+
+const handleWsMessage = useCallback((event: MessageEvent) => {
+  const payload = JSON.parse(event.data);
+  const { updateNodeData, setNodeStatus, setAiHighlight } = actionsRef.current;
+
+  if (payload.type === "AI_TOOL_START") {
+    setAiHighlight(payload.source_id, payload.target_id, true);
+  } else if (payload.type === "AI_TOOL_END") {
+    setAiHighlight(payload.source_id, null, false);
+  } else if (payload.type === "NODE_LOG") {
+    updateNodeData(payload.node_id, { liveStatus: payload.message });
+  } else if (payload.type === "NODE_STARTED") {
+    setNodeStatus(payload.node_id, "running");
+    updateNodeData(payload.node_id, { liveStatus: "Initializing..." });
+  } else if (payload.type === "NODE_COMPLETED") {
+    const status =
+      payload.status === "failed" ? "failed"
+      : payload.status === "paused" ? "paused"
+      : "success";
+    setNodeStatus(payload.node_id, status);
+    updateNodeData(payload.node_id, { liveStatus: null });
+    if (payload.output) {
+      setNodeOutputs((prev) => ({ ...prev, [payload.node_id]: payload.output }));
+    }
+  }
+}, []); 
+
+  // ── Shared WS connector ────────────────────────────────────────────────
+  const connectToExecution = useCallback((execId: string) => {
+    // Close any existing execution WS first
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
+    const ws = new WebSocket(`${wsUrl}/api/v0/execution/ws/${execId}`);
+    wsRef.current = ws;
+
+    ws.onopen = () => console.log(`[Execution WS] Connected: ${execId}`);
+    ws.onmessage = handleWsMessage;
+    ws.onclose = () => {
+      console.log("[Execution WS] Closed.");
+      setIsRunning(false);
+    };
+  }, [wsUrl, handleWsMessage]);
+
+  const startExecution = async (triggerNodeId: string) => {
     setIsRunning(true);
-    setNodeOutputs({}); 
+    setNodeOutputs({});
     clearStatuses();
-    
+
     try {
-      // Hit your FastAPI /start endpoint
-      const {data, error} = await api.POST("/api/v0/execution/start", {
+      const { data, error } = await api.POST("/api/v0/execution/start", {
         body: {
           workflow_id: workflowId,
           trigger_node_id: triggerNodeId,
-          trigger_data: { test: "data" } 
-        }
+          trigger_data: { test: "data" },
+        },
       });
-      
-      if(error){
-        console.log(error)
-        throw new Error("cant make exec")
-      }
-      setExecutionId(data.execution_id); // Save the ID so the WebSocket can connect!
-      
+
+      if (error) throw new Error("Can't start execution");
+
+      connectToExecution(data.execution_id);
+      setExecutionId(data.execution_id);
+
     } catch (error) {
       console.error("Failed to start execution:", error);
+      setIsRunning(false);
     }
-    finally{
-        setIsRunning(false);
-
-    }
+    setIsRunning(false); 
   };
 
-// 2. The WebSocket Connection
- // Pull your actions from Zustand
-
   useEffect(() => {
-    if (!executionId) return;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8084";
+    if (!workflowId) return;
 
-    const wsUrl = baseUrl.replace(/^http/, 'ws');
-    const ws = new WebSocket(`${wsUrl}/api/v0/execution/ws/${executionId}`);
-    ws.onopen = () => console.log("Connected to execution stream!");
+    const ws = new WebSocket(`${wsUrl}/api/v0/execution/ws/workflow/${workflowId}`);
 
+    ws.onopen = () => console.log(`[Workflow WS] Listening: ${workflowId}`);
     ws.onmessage = (event) => {
       const payload = JSON.parse(event.data);
-
-      if (payload.type === "AI_TOOL_START") {
-        // Turn the wire and the tool MAGENTA
-        setAiHighlight(payload.source_id, payload.target_id, true);
-      } 
-      else if (payload.type === "AI_TOOL_END") {
-        // Turn off the magenta glow for all tools connected to this agent
-        setAiHighlight(payload.source_id, null, false);
-      }
-      if (payload.type === "NODE_LOG") {
-        // ✅ Much cleaner! Just pass the ID and the new data property.
-        updateNodeData(payload.node_id, { liveStatus: payload.message });
-      } 
-      
-      else if (payload.type === "NODE_STARTED") {
-        setNodeStatus(payload.node_id, 'running');
-        // Reset the live status text for a fresh run
-        updateNodeData(payload.node_id, { liveStatus: "Initializing AI..." });
-        
-        // (Don't forget to clear out the old outputs if you have that state!)
-      } 
-      
-      else if (payload.type === "NODE_COMPLETED") {
-        setNodeStatus(payload.node_id, payload.status === 'failed' ? 'failed' : (payload.status === 'paused' ? 'paused' : 'success' ));
-        // Clear the liveStatus so it doesn't linger after finishing
-        updateNodeData(payload.node_id, { liveStatus: null });
-        
-        if (payload.output) {
-          setNodeOutputs((prevOutputs) => ({
-            ...prevOutputs,
-            [payload.node_id]: payload.output // Maps the Node ID to its JSON output
-          }));
-        }
+      if (payload.type === "EXECUTION_STARTED") {
+        clearStatuses();
+        setNodeOutputs({});
+        setIsRunning(true);
+        // ✅ Same direct connection — no re-render delay
+        connectToExecution(payload.execution_id);
+        setExecutionId(payload.execution_id);
       }
     };
+    ws.onclose = () => console.log("[Workflow WS] Closed.");
 
-    ws.onclose = () => {
-      console.log("Execution stream closed.");
-      setIsRunning(false);
-    };
+    return () => ws.close();
+  }, [workflowId]);
 
-    return () => ws.close(); 
-  }, [executionId, updateNodeData, setNodeStatus]);
+  // ── 3. Cleanup on unmount ──────────────────────────────────────────────
+  useEffect(() => {
+    return () => wsRef.current?.close();
+  }, []);
+
   return { startExecution, isRunning, nodeOutputs };
 }

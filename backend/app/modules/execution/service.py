@@ -1,7 +1,9 @@
 from .repository import ExecutionRepository
 from app.modules.workflows.model import Workflow
+from app.modules.execution.model import Execution
 import traceback
 from .registry import TASK_REGISTRY
+from fastapi import HTTPException, Request, BackgroundTasks
 from typing import Any
 from .websocket import ws_manager
 from sqlalchemy.orm import Session
@@ -73,10 +75,29 @@ class ExecutionService:
             })
             cn=''
             
+            TRIGGER_NODE_TYPES = {'manualTrigger', 'webhookTrigger', 'formTrigger'}
+
+            visited_nodes: set[str] = set()
+
+            # Seed ALL trigger nodes so none can be re-entered mid-execution
+            for node in workflow.nodes:
+                if node.get('type') in TRIGGER_NODE_TYPES:
+                    visited_nodes.add(node['id'])
+                    print(f"Pre-seeding trigger node: {node['id']} ({node.get('type')})")
+            
             while stack:
                 try:
                     current_node = stack.pop()
-                    cn=current_node
+                    cn = current_node
+                    
+                    # 2. THE FIX: Check if we've been here before to stop loops!
+                    if current_node in visited_nodes:
+                        print(f"🛑 Cycle detected! Skipping {current_node} because it already ran.")
+                        continue
+                    
+                    # Mark it as visited so it never runs again in this execution
+                    visited_nodes.add(current_node)
+
                     print(f"Processing node: {current_node}")
 
                     await ws_manager.broadcast(execution_id, {
@@ -263,6 +284,12 @@ class ExecutionService:
 
             print(f"🚀 [RESUME] Step 5: Entering Engine Loop with stack: {stack}")
             cn = ""
+            TRIGGER_NODE_TYPES = {'manualTrigger', 'webhookTrigger', 'formTrigger'}
+            visited_nodes: set[str] = set()
+
+            for node in workflow.nodes:
+                if node.get('type') in TRIGGER_NODE_TYPES:
+                    visited_nodes.add(node['id'])
             while stack:
                 try:
                     current_node = stack.pop()
@@ -378,3 +405,108 @@ class ExecutionService:
             # ==========================================
             print("🧹 [RESUME] Closing Database Session.")
             db.close()
+
+  
+
+    async def run_webhook(self, db: Session, webhook_id: str, request: Request, background_tasks: BackgroundTasks):
+        webhook = self.repo.find_webhook(db=db, webhook_id=webhook_id)
+    
+        if not webhook or webhook.method not in ["GET", "POST", "ANY"]:
+            raise HTTPException(status_code=404, detail="Invalid or inactive webhook call")
+
+        payload: dict[str, Any] = {}
+        if webhook.method == 'POST' or request.method == 'POST':
+            try:
+                payload = await request.json()
+            except Exception:
+                form_data = await request.form()
+                payload = dict(form_data)
+                
+        elif webhook.method == 'GET' or request.method == 'GET':
+            payload = dict(request.query_params)
+        
+        workflow = db.query(Workflow).filter_by(id=webhook.workflow_id).first()
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Invalid workflow")
+        
+        execution = Execution(
+            workflow_id=workflow.id,
+            status="running",
+            state={webhook.node_id: {"status": "success", "output": payload}}
+        )
+        db.add(execution)
+        db.commit()
+        db.refresh(execution)
+        await ws_manager.broadcast_to_workflow(workflow.id, {
+            "type": "EXECUTION_STARTED",
+            "execution_id": execution.id,
+            "trigger": "webhook"
+        })
+        background_tasks.add_task(
+            self.run_execution,
+            workflow_id=workflow.id,
+            execution_id=execution.id,
+            trigger_node=webhook.node_id,
+            trigger_data=payload
+        )
+    
+        return {"message": "Webhook received, workflow triggered", "execution_id": execution.id}
+
+# app/modules/execution/service.py - add these two methods
+
+    async def save_form(self, db: Session, workflow_id: str, node_id: str,
+                        form_elements: list[str], form_title: str,
+                        form_description: str, user_id: str):
+        from app.modules.users.model import User
+        tenant_id = db.query(User.accountName).filter_by(id=user_id).scalar()
+        if not tenant_id:
+            raise HTTPException(status_code=404, detail="Invalid Request")
+
+        form = self.repo.save_form_config(
+            db=db,
+            workflow_id=workflow_id,
+            node_id=node_id,
+            form_elements=form_elements,
+            form_title=form_title or "",
+            form_description=form_description or "",
+            account_name=tenant_id
+        )
+
+        frontend_domain = f"https://{tenant_id}.nexflow.vaibhavr.xyz"
+        form_url = f"{frontend_domain}/form/{form.id}"
+
+        return {"form_id": form.id, "url": form_url}
+
+    async def submit_form(self, db: Session, form_id: str, 
+                          field_values: dict[str,Any], background_tasks: BackgroundTasks):
+        form = self.repo.get_form_config(db=db, form_id=form_id)
+        if not form:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        sanitized = {k.replace(" ", "_"): v for k, v in field_values.items()}
+        trigger_data = {"fields": sanitized, "form_id": form_id}
+        # Wrap submission data the same way webhook does
+        trigger_data:dict[str,Any] = {"fields": field_values, "form_id": form_id}
+
+        execution = Execution(
+            workflow_id=form.workflow_id,
+            status="running",
+            state={form.node_id: {"status": "success", "output": trigger_data}}
+        )
+        db.add(execution)
+        db.commit()
+        db.refresh(execution)
+        await ws_manager.broadcast_to_workflow(form.workflow_id, {
+                "type": "EXECUTION_STARTED",
+                "execution_id": execution.id,
+                "trigger": "form"
+            })
+        background_tasks.add_task(
+            self.run_execution,
+            workflow_id=form.workflow_id,
+            execution_id=execution.id,
+            trigger_node=form.node_id,
+            trigger_data=trigger_data
+        )
+
+        return {"message": "Form submitted successfully", "execution_id": execution.id}

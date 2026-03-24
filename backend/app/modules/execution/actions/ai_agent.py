@@ -126,7 +126,8 @@ async def execute_ai_agent(node: dict[str, Any], global_state: dict[str, Any]) -
                             await ws_manager.broadcast(execution_id, {
                                 "type": "AI_TOOL_START",
                                 "source_id": node["id"],
-                                "target_id": target_id
+                                "target_id": target_id,
+                                "execution_id": execution_id
                             })
                 # ==========================================
                     

@@ -103,9 +103,7 @@ async def execute_send_telegram(node: Dict[str, Any], global_state: Dict[str, An
         except httpx.HTTPStatusError as e:
             print(f"Telegram API Error: {e.response.text}")
             return {"status": "failed", "error": f"Telegram API rejected the request: {e.response.status_code}"}
-        except Exception as e:
-            print(f"Network Error sending Telegram message: {e}")
-            return {"status": "failed", "error": str(e)}
+         
 
 
 

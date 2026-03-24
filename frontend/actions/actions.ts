@@ -70,3 +70,34 @@ export const saveWorkflow = errorHandeler(
         
     }
 )
+export const saveWebhook = errorHandeler(
+    async({workflow_id, node, method}: {workflow_id:string, node: string, method:string}) => {
+        const { data, error } = await api.POST("/api/v0/execution/config", {
+    
+        body: {
+          workflow_id,
+          node_id:node,
+          method,
+        }
+      });
+
+      return {data, error}
+        
+    }
+)
+
+export const saveForm = errorHandeler(
+  async ({ workflow_id, node_id, form_title, form_description, form_elements }: {
+    workflow_id: string;
+    node_id: string;
+    form_title?: string;
+    form_description?: string;
+    form_elements: any[];
+  }) => {
+    const { data, error } = await api.POST("/api/v0/execution/form/config", {
+      body: { workflow_id, node_id, form_title, form_description, form_elements },
+    });
+    return { data, error };
+  }
+);
+

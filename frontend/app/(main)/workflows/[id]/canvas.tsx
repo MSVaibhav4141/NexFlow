@@ -28,16 +28,36 @@ const [drawerOpener, setDrawerOpenerId] = useState<string>("")
 const [handelerValue, setHandelerValue] = useState<string | null>(null)
 const nodes = useWorkflowStore((state) => state.nodes);
 const edges = useWorkflowStore((state) => state.edges);
+const workflow_id = useWorkflowStore((state) => state.workflowId);
 const onNodesChange = useWorkflowStore((state) => state.onNodesChange);
 const onEdgesChange = useWorkflowStore((state) => state.onEdgesChange);
 const onConnect = useWorkflowStore((state) => state.onConnect);
 const addEdge = useWorkflowStore((state) => state.addEdge);
 const addNode = useWorkflowStore((state) => state.addNode);
 const setInitialData = useWorkflowStore((state) => state.setInitialData);
-const { startExecution, isRunning, nodeOutputs } = useExecution();
+const { startExecution, isRunning, nodeOutputs } = useExecution(workflow_id ?? "");
 
 const hasHydrated = useRef(false);
 
+// 1. Make sure you are pulling 'nodes' from your Zustand store in this file!
+
+  // 2. Paste this guardrail function
+  const isValidConnection = (connection: any) => {
+    const targetNode = nodes.find((n) => n.id === connection.target);
+    if (!targetNode) return false;
+
+    // Reject if trying to connect into ANY trigger node
+    const isTargetATrigger = ['manualTrigger','webhookTrigger','formTrigger'].includes(targetNode.type ?? "")
+    console.log(isTargetATrigger, 'yooyoyo',targetNode.type)
+    // Reject if trying to loop a node back to itself
+    const isSelfConnection = connection.source === connection.target;
+
+    if (isTargetATrigger || isSelfConnection) {
+      return false; // The wire will turn red and snap back!
+    }
+
+    return true; // Connection is valid
+  };
  
 const nodeStatuses = useWorkflowStore((state) => state.nodeStatuses);
 const styledEdges = edges.map((edge) => {
@@ -206,6 +226,7 @@ const handleAddNode = (type: string, label: string) => {
       <ReactFlow
         nodes={nodes}
         edges={styledEdges}
+        isValidConnection={isValidConnection}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

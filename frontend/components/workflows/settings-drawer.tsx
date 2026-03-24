@@ -1,20 +1,65 @@
-import { X, Play, Database, Settings2, Zap, GitBranch, Loader2, Info } from "lucide-react";
+import { X, Play, Database, Settings2, Zap, GitBranch, Loader2, Info, Check, Copy, RefreshCw } from "lucide-react";
 import { type Node } from "@xyflow/react";
 import { useExecution } from "@/hooks/useExecution"; // Adjust your import path
 import { useWorkflowStore } from "@/store/useWorkflowStore";
+import { useState } from "react";
+import { api } from "@/lib/api";
+import { saveForm, saveWebhook } from "@/actions/actions";
+// NodeEditorModal — EditorProps type
 type EditorProps = {
   isOpen: boolean;
   onClose: () => void;
   activeNode: Node | null;
   updateNodeData: (nodeId: string, newData: any) => void;
-  nodeOutputs: Record<string, any>; 
+  nodeOutputs: Record<string, any>;
   isRunning: boolean;
-  startExecution: (workflowId: string, nodeId: string) => void;
+  startExecution: (nodeId: string) => void; // ✅ one arg now
 };
 export function NodeEditorModal({ isOpen, onClose, activeNode, updateNodeData,nodeOutputs,isRunning,startExecution }: EditorProps) {
    const allNodes = useWorkflowStore((state) => state.nodes);
   const allEdges = useWorkflowStore((state) => state.edges);
   const wokrflowId = useWorkflowStore((state) => state.workflowId)
+  const [isSavingWebhook, setIsSavingWebhook] = useState(false);
+  // Inside NodeEditorModal, add state + handler at the top alongside isSavingWebhook
+const [isSavingForm, setIsSavingForm] = useState(false);
+
+const handleMakeFormLive = async () => {
+  if (!wokrflowId || !activeNode) {
+    alert("Please save the workflow first.");
+    return;
+  }
+  setIsSavingForm(true);
+  try {
+    const response = await saveForm({
+      workflow_id: wokrflowId,
+      node_id: activeNode.id,
+      form_title: config.formTitle,
+      form_description: config.formDescription,
+      form_elements: config.formElements || [],
+    });
+
+    let data, error;
+    if (response.success) {
+      data = response.data.data;
+      error = response.data.error;
+    }
+    if (error || !data) throw new Error("Failed");
+
+    updateNodeData(activeNode.id, {
+      ...activeNode.data,
+      config: {
+        ...config,
+        formId: data.form_id ,
+        generatedUrl: data.url,
+      },
+    });
+  } catch {
+    alert("Failed to publish form.");
+  } finally {
+    setIsSavingForm(false);
+  }
+};
+  const [copied, setCopied] = useState(false);
   if (!activeNode || !isOpen) return null;
 const getUpstreamNodes = () => {
     const upstreamNodes: Node[] = [];
@@ -80,6 +125,57 @@ const getUpstreamNodes = () => {
     (edge) => edge.target === activeNode.id && edge.sourceHandle === 'tool'
   );
   // Helper to render JSON as a list of draggable variables
+
+  const handleSaveWebhook = async () => {
+  if (!wokrflowId || !activeNode) {
+    alert("Please save the workflow first before creating a webhook.");
+    return;
+  }
+
+  setIsSavingWebhook(true);
+  try {
+    const payload = {
+      workflow_id: wokrflowId,
+      node: activeNode.id,
+      method: config.method || "POST",
+    };
+    const response = await saveWebhook(payload);
+    let data;
+    let error;
+    if (response.success) {
+      data = response.data.data;
+      error = response.data.error;
+    }
+
+    if (error || !data) throw new Error("Failed to configure webhook");
+
+    // ✅ Spread activeNode.data first to preserve label, description, etc.
+    updateNodeData(activeNode.id, {
+      ...activeNode.data,
+      config: {
+        ...config,
+        webhookId: data.webhook_id,
+        generatedUrl: data.url,
+      },
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to save webhook configuration.");
+  } finally {
+    setIsSavingWebhook(false);
+  }
+};
+
+  const copyToClipboard = () => {
+    if (!config.generatedUrl) return;
+    navigator.clipboard.writeText(config.generatedUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!isOpen || !activeNode) return null;
+  
   const renderDraggableData = (data: any, nodeId: string, path = ""): React.ReactNode => {
     if (typeof data !== "object" || data === null) return null;
 
@@ -139,12 +235,13 @@ const getUpstreamNodes = () => {
           <div className="flex items-center gap-3">
              <button 
                 onClick={() => {
-                    if(!wokrflowId){
-                        alert("No workflow Id set")
-                        return
-                    }
-                    startExecution(wokrflowId, activeNode.id)
-                }}
+  if (!wokrflowId) {
+    alert("No workflow Id set");
+    return;
+  }
+  startExecution(activeNode.id);
+}}
+
                 disabled={isRunning}
                 className="flex items-center gap-2 rounded-md bg-orange-600 px-4 py-1.5 text-xs font-bold text-white transition-hover hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
              >
@@ -193,32 +290,91 @@ const getUpstreamNodes = () => {
                 </div>
               ) : (
                 upstreamNodes.map((upNode) => {
-                  // Check if this specific previous node has data from our WebSocket!
-                  const outData = nodeOutputs[upNode.id];
+  const outData = nodeOutputs[upNode.id];
 
-                  return (
-                    <div key={upNode.id} className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
-                        <Database className="h-3 w-3 text-indigo-400" /> 
-                        {upNode.data?.label as string || upNode.type}
-                      </div>
-                      
-                     {outData ? (
-                        <div className="ml-5 rounded-md bg-[#121216] border border-white/5 py-2 overflow-x-auto">
-                          {/* Use our new draggable renderer instead of JSON.stringify */}
-                          {renderDraggableData(outData, upNode.id)}
-                        </div>
-                      ) :(
-                        // If it HAS NOT run yet, tell the user to execute it
-                        <div className="ml-5 rounded-md border border-dashed border-white/10 p-3 text-center">
-                          <p className="text-[10px] text-gray-500">
-                            Run this step to see its output data.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
+  // ── Special case: formTrigger shows its fields immediately ──
+  if (upNode.type === "formTrigger") {
+    const formElements: any[] = (upNode.data?.config as any)?.formElements || [];
+    return (
+      <div key={upNode.id} className="space-y-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
+          <Database className="h-3 w-3 text-indigo-400" />
+          {upNode.data?.label as string || "Form Trigger"}
+        </div>
+
+        {formElements.length === 0 ? (
+          <div className="ml-5 rounded-md border border-dashed border-white/10 p-3 text-center">
+            <p className="text-[10px] text-gray-500">
+              Add fields to your form to map them here.
+            </p>
+          </div>
+        ) : (
+          <div className="ml-5 rounded-md bg-[#121216] border border-white/5 py-2 space-y-1">
+            {/* Always available: the whole fields object */}
+            <div
+              draggable
+              onDragStart={(e) =>
+                e.dataTransfer.setData(
+                  "text/plain",
+                  `{{${upNode.id}.fields}}`
+                )
+              }
+              className="flex items-center cursor-grab hover:bg-white/10 px-3 py-1.5 rounded transition-colors group"
+            >
+              <span className="text-gray-600 mr-2 group-hover:text-white">⠿</span>
+              <span className="text-orange-400 font-bold mr-2 font-mono text-[10px]">fields:</span>
+              <span className="text-gray-500 text-[10px]">{"{ All Fields }"}</span>
+            </div>
+
+            {/* One chip per field label */}
+            {formElements.map((el: any, i: number) => {
+              // Sanitize label to a safe key: "Full Name" → "Full_Name"
+              const fieldKey = el.label?.replace(/\s+/g, "_") || `field_${i}`;
+              const templateStr = `{{${upNode.id}.fields.${fieldKey}}}`;
+              return (
+                <div
+                  key={i}
+                  draggable
+                  onDragStart={(e) =>
+                    e.dataTransfer.setData("text/plain", templateStr)
+                  }
+                  className="flex items-center cursor-grab hover:bg-white/10 px-3 py-1.5 rounded transition-colors group ml-3 border-l border-white/5 pl-2"
+                >
+                  <span className="text-gray-600 mr-2 group-hover:text-white">⠿</span>
+                  <span className="text-orange-400 font-bold mr-2 font-mono text-[10px]">
+                    {fieldKey}:
+                  </span>
+                  <span className="text-blue-400 text-[10px]">{el.type}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Default: all other node types (existing logic) ──
+  return (
+    <div key={upNode.id} className="space-y-2">
+      <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
+        <Database className="h-3 w-3 text-indigo-400" />
+        {upNode.data?.label as string || upNode.type}
+      </div>
+      {outData ? (
+        <div className="ml-5 rounded-md bg-[#121216] border border-white/5 py-2 overflow-x-auto">
+          {renderDraggableData(outData, upNode.id)}
+        </div>
+      ) : (
+        <div className="ml-5 rounded-md border border-dashed border-white/10 p-3 text-center">
+          <p className="text-[10px] text-gray-500">
+            Run this step to see its output data.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+})
               )}
             </div>
           </div>
@@ -273,7 +429,7 @@ const getUpstreamNodes = () => {
           placeholder="e.g. Action Required"
           value={config.subject || ""}
           onChange={(e) => handleConfigChange("subject", e.target.value)}
-          onDrop={(e) => handleDropOnInput(e, "toEmail")}
+          onDrop={(e) => handleDropOnInput(e, "subject")}
           onDragOver={handleDragOver}
         />
       </div>
@@ -360,7 +516,7 @@ const getUpstreamNodes = () => {
                     placeholder="e.g. 123456789 or {{node_1.chatId}}"
                     value={config.chatId || ""}
                     onChange={(e) => handleConfigChange("chatId", e.target.value)}
-                    onDrop={(e) => handleDropOnInput(e, "toEmail")}
+                    onDrop={(e) => handleDropOnInput(e, "chatId")}
           onDragOver={handleDragOver}
                   />
                   <p className="text-[10px] text-gray-500">
@@ -400,7 +556,7 @@ const getUpstreamNodes = () => {
                         placeholder="Approve"
                         value={config.approveText || "Approve"}
                         onChange={(e) => handleConfigChange("approveText", e.target.value)}
-                        onDrop={(e) => handleDropOnInput(e, "toEmail")}
+                        onDrop={(e) => handleDropOnInput(e, "approveText")}
           onDragOver={handleDragOver}
                       />
                     </div>
@@ -411,7 +567,7 @@ const getUpstreamNodes = () => {
                         placeholder="Reject"
                         value={config.rejectText || "Reject"}
                         onChange={(e) => handleConfigChange("rejectText", e.target.value)}
-                        onDrop={(e) => handleDropOnInput(e, "toEmail")}
+                        onDrop={(e) => handleDropOnInput(e, "rejectText")}
           onDragOver={handleDragOver}
                       />
                     </div>
@@ -446,8 +602,8 @@ const getUpstreamNodes = () => {
                       placeholder="e.g. {{node_1.age}}"
                       value={config.value1 || ""}
                       onChange={(e) => handleConfigChange("value1", e.target.value)}
-                      onDrop={(e) => handleDropOnInput(e, "toEmail")}
-          onDragOver={handleDragOver}
+                      onDrop={(e) => handleDropOnInput(e, "value1")}  
+                      onDragOver={handleDragOver}
                     />
                   </div>
 
@@ -475,7 +631,7 @@ const getUpstreamNodes = () => {
                       placeholder="e.g. 18 or admin"
                       value={config.value2 || ""}
                       onChange={(e) => handleConfigChange("value2", e.target.value)}
-                      onDrop={(e) => handleDropOnInput(e, "toEmail")}
+                      onDrop={(e) => handleDropOnInput(e, "value2")}
           onDragOver={handleDragOver}
                     />
                   </div>
@@ -484,33 +640,58 @@ const getUpstreamNodes = () => {
               </div>
             </div>
           )}
-               {/* Webhook Form */}
-               {activeNode.type === "webhookTrigger" && (
-                 <div className="max-w-xl space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase">HTTP Method</label>
-                      <select 
-                        value={config.method || "POST"}
-                        onChange={(e) => handleConfigChange("method", e.target.value)}
-                        className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white focus:ring-1 focus:ring-indigo-500"
-                      >
-                        <option>GET</option>
-                        <option>POST</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Webhook Path</label>
-                      <input 
-                        className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white placeholder:text-gray-600"
-                        placeholder="/api/v1/trigger"
-                        value={config.path || ""}
-                        onChange={(e) => handleConfigChange("path", e.target.value)}
-                        onDrop={(e) => handleDropOnInput(e, "toEmail")}
-          onDragOver={handleDragOver}
-                      />
-                    </div>
-                 </div>
-               )}
+                {/* Webhook Form */}
+      {activeNode.type === "webhookTrigger" && (
+        <div className="max-w-xl space-y-6">
+          
+          {/* Method Selector */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase">HTTP Method</label>
+            <select 
+              value={config.method || "POST"}
+              onChange={(e) => handleConfigChange("method", e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+            </select>
+          </div>
+
+          {/* Action Button */}
+          <button
+            onClick={handleSaveWebhook}
+            disabled={isSavingWebhook}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {isSavingWebhook ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+            {config.webhookId ? "Update Webhook Method" : "Generate Webhook URL"}
+          </button>
+
+          {/* Display Generated URL (Only shows if backend returned it) */}
+          {config.generatedUrl && (
+            <div className="space-y-2 animate-in fade-in duration-300">
+              <label className="text-xs font-bold text-emerald-400 uppercase">Your Public Endpoint</label>
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#121216] p-1">
+                <input 
+                  readOnly
+                  value={config.generatedUrl}
+                  className="w-full bg-transparent px-3 py-2 text-sm text-gray-300 focus:outline-none"
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-gray-300 transition-all hover:bg-white/20 hover:text-white"
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                External services can send a {config.method || "POST"} request here to trigger this workflow.
+              </p>
+            </div>
+          )}
+          
+        </div>
+      )}
 
                {/* Form Trigger (Based on your image) */}
                {activeNode.type === "formTrigger" && (
@@ -528,7 +709,7 @@ const getUpstreamNodes = () => {
           placeholder="e.g. Contact Us"
           value={config.formTitle || ""}
           onChange={(e) => handleConfigChange("formTitle", e.target.value)}
-          onDrop={(e) => handleDropOnInput(e, "toEmail")}
+          onDrop={(e) => handleDropOnInput(e, "formTitle")}
           onDragOver={handleDragOver}
         />
       </div>
@@ -610,6 +791,38 @@ const getUpstreamNodes = () => {
       >
         Add Form Element
       </button>
+      {/* Add below the existing "Add Form Element" button */}
+<div className="border-t border-white/5 pt-6 space-y-4">
+  <button
+    onClick={handleMakeFormLive}
+    disabled={isSavingForm || !config.formElements?.length}
+    className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {isSavingForm ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}
+    {config.formId ? "Update Live Form" : "Make Form Live"}
+  </button>
+
+  {config.generatedUrl && (
+    <div className="space-y-2 animate-in fade-in duration-300">
+      <label className="text-xs font-bold text-emerald-400 uppercase">
+        Public Form URL
+      </label>
+      <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#121216] p-1">
+        <input
+          readOnly
+          value={config.generatedUrl}
+          className="w-full bg-transparent px-3 py-2 text-sm text-gray-300 focus:outline-none"
+        />
+        <button
+          onClick={copyToClipboard}
+          className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-gray-300 transition hover:bg-white/20 hover:text-white"
+        >
+          {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  )}
+</div>
     </div>
   </div>
 )}  
