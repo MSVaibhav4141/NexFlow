@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useContext } from "react";
 import { WorkflowContext } from "../../app/(main)/workflows/[id]/workflowContext";
 import { useWorkflowStore } from "@/store/useWorkflowStore";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useExecution } from "@/hooks/useExecution";
 // Adjust this import path to match your actual WorkflowContext location
 // --- THE TRIGGER NODE BASE ---
 function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, borderColorClass }: any) {
@@ -24,7 +25,6 @@ function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, bord
   } else if (status === 'failed') {
     statusClasses = "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]";
   }
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     deleteElements({ nodes: [{ id: data.id }] });
@@ -32,7 +32,7 @@ function BaseTriggerNode({ data, selected, icon: Icon, colorClass, bgClass, bord
 
   const handleExecute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("Executing specific node:", data.id);
+    alert('Please click on the node you want to execute. Execution button is on the modal that will pop up')
   };
 
   

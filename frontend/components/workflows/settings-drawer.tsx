@@ -243,7 +243,7 @@ const getUpstreamNodes = () => {
              <button 
                 onClick={() => {
   if (!wokrflowId) {
-    alert("No workflow Id set");
+    alert("Please click on save workflow than retry");
     return;
   }
   startExecution(activeNode.id);
