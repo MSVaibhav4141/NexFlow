@@ -1,8 +1,13 @@
+import { MobileBlocker } from "@/components/MobileBlocker";
 import { AiCommander } from "../../../components/auth/dashboard/AiCommad";
 import { QuickActions } from "../../../components/auth/dashboard/QuickAction";
 
 export default function DashboardPage() {
   return (
+    <>
+    <div className="block lg:hidden">
+        <MobileBlocker />
+      </div>
     <div className="flex min-h-full w-full flex-col px-8 py-12 lg:px-16 lg:py-20">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center pt-10">
         
@@ -20,5 +25,6 @@ export default function DashboardPage() {
 
       </div>
     </div>
+    </>
   );
 }
