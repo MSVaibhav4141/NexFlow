@@ -398,10 +398,8 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
         )}
       </div>
 
-      {/* Main Content Handle (Input) */}
       <Handle type="target" position={Position.Left} className="h-3 w-3 border-2 border-[#121216] bg-gray-400 !left-[-6px]" />
 
-      {/* Main Body (Bot Icon + Text + LIVE STATUS) */}
       <div className="flex flex-col p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400">
@@ -444,16 +442,16 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
         {/* CHAT MODEL* BRANCH */}
         <div className="relative flex items-center justify-between px-4 py-2">
           {!isConnectedModel && (
-            <div className="absolute -bottom-13 left-1/2 flex flex-col -translate-x-1/2 justify-center items-center opacity-0 transition-opacity group-hover:opacity-100">
-              <div className="h-7 w-0.5 bg-orange-500/30" />
-              <button 
-                onClick={(e) => { e.stopPropagation(); openDrawer(id, "chatModel"); }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition-transform hover:scale-110"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>  
-          )}
+  <div className="absolute -bottom-14 left-1/2 z-20 flex flex-col -translate-x-1/2 items-center justify-center opacity-0 transition-all duration-300 group-hover:opacity-100">
+    <div className="h-6 w-0.5 bg-orange-500/40" />
+    <button 
+    disabled
+      className="whitespace-nowrap rounded-full border border-orange-500/40 bg-[#121216]/90 px-3 py-1.5 text-[10px] font-bold tracking-wide text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.3)] backdrop-blur-sm transition-transform hover:scale-105 hover:bg-orange-500/10 hover:text-orange-300"
+    >
+      Click Node select LLM
+    </button>
+  </div>  
+)}
           <span className="text-[10px] font-bold uppercase text-gray-400">Chat Model<span className="text-red-500">*</span></span>
           <Handle 
             type="source" 
@@ -468,11 +466,12 @@ export function AIAgentNode({ id, data, selected }: NodeProps) {
           {!isConnectedMemory && (
             <div className="absolute -bottom-13 left-1/2 flex flex-col -translate-x-1/2 justify-center items-center opacity-0 transition-opacity group-hover:opacity-100">
               <div className="h-7 w-0.5 bg-purple-500/30" />
-              <button 
-                onClick={(e) => { e.stopPropagation(); openDrawer(id, "memory"); }}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-500 text-white shadow-lg transition-transform hover:scale-110"
+              <button
+              disabled 
+                // onClick={(e) => { e.stopPropagation(); openDrawer(id, "memory"); }}
+                      className="whitespace-nowrap rounded-full border border-purple-600 bg-purple-500 px-3 py-1.5 text-[10px] font-bold tracking-wide text-white shadow-[0_0_15px_rgba(249,115,22,0.3)] backdrop-blur-sm transition-transform "
               >
-                <Plus className="h-4 w-4" />
+                S oon
               </button>
             </div>
           )}

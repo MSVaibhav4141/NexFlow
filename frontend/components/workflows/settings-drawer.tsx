@@ -5,7 +5,14 @@ import { useWorkflowStore } from "@/store/useWorkflowStore";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { saveForm, saveWebhook } from "@/actions/actions";
-// NodeEditorModal — EditorProps type
+// NodeEditorModal.tsx — add near top
+import { CredentialSelector } from "@/components/CredentialSelector";
+
+const NODE_CREDENTIAL_SERVICE: Record<string, string> = {
+  sendTelegram: "telegram",
+  agentAi: "groq",
+  sendEmail: "gmail",
+};
 type EditorProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -390,7 +397,11 @@ const getUpstreamNodes = () => {
                 {/* --- SEND EMAIL NODE --- */}
 {activeNode.type === "sendEmail" && (
   <div className="max-w-xl space-y-6">
-    
+    <CredentialSelector
+      service="gmail"
+      selectedId={config.credential_id || ""}
+      onSelect={(id) => handleConfigChange("credential_id", id)}
+    />
     {/* 1. Operation Selection */}
     <div className="space-y-2">
       <label className="text-xs font-bold text-gray-400 uppercase">Operation</label>
@@ -489,7 +500,11 @@ const getUpstreamNodes = () => {
 {/* --- SEND TELEGRAM NODE --- */}
           {activeNode.type === "sendTelegram" && (
             <div className="max-w-xl space-y-6">
-              
+              <CredentialSelector
+      service="telegram"
+      selectedId={config.credential_id || ""}
+      onSelect={(id) => handleConfigChange("credential_id", id)}
+    />
               {/* 1. Operation Selection */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-400 uppercase">Operation</label>
@@ -828,54 +843,103 @@ const getUpstreamNodes = () => {
 )}  
 {/* --- AI AGENT NODE --- */}
                 {activeNode.type === "agentAi" && (
-                  <div className="max-w-xl space-y-6">
-                    
-                    <div className="flex items-start gap-3 rounded-md border border-indigo-500/30 bg-indigo-500/10 p-3 text-sm text-indigo-300">
-                      <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                      <p>
-                        Configure your AI Agent here. It will use the Chat Model you connect, 
-                        and can access any Tools wired into its bottom handle.
-                      </p>
-                    </div>
+          <div className="max-w-xl space-y-6">
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
+      LLM Provider <span className="text-red-500">*</span>
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        {(() => {
+          switch (config.llm_model || "openai") {
+            case "openai": 
+              return <svg viewBox="0 0 24 24" className="h-4 w-4 text-emerald-400" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zM13.2599 22.5002c-1.2215 0-2.3523-.5617-3.1095-1.5135l.082-.0477 5.3284-3.0805a1.5284 1.5284 0 0 0 .7687-1.3283v-7.669l2.4293 1.4011a.0664.0664 0 0 1 .0332.057v7.0782c-.0011 2.8105-2.285 5.0945-5.0974 5.1026zM4.6063 15.6567a4.5422 4.5422 0 0 1-.7736-3.3421l.082.0477 5.3284 3.0805c.4418.2543.9877.2543 1.4295 0l6.6393-3.8345-2.4293-1.401-.0475.028v7.0782a5.107 5.107 0 0 1-4.4172 4.3986l-5.8116-6.0494zm.8242-9.6702a4.548 4.548 0 0 1 2.336-2.5042l-.0475.082v6.1611a1.528 1.528 0 0 0 .7687 1.3282l6.6393 3.8345-2.4293 1.4011a.0664.0664 0 0 1-.0664 0l-6.13-3.5391a5.107 5.107 0 0 1-2.551-4.4172v-2.3464zm13.136 0a4.548 4.548 0 0 1-2.336 2.5042l.0475-.082V2.2476a1.528 1.528 0 0 0-.7687-1.3282L8.87 4.754 11.2993 6.155a.0664.0664 0 0 1 .0664 0l6.13 3.5391a5.107 5.107 0 0 1 2.551 4.4172v2.3464z" /></svg>;
+            case "gemini": 
+              return <svg viewBox="0 0 24 24" className="h-4 w-4 text-blue-400" fill="currentColor"><path d="M12 2C12 7.52 16.48 12 22 12C16.48 12 12 16.48 12 22C12 16.48 7.52 12 2 12C7.52 12 12 7.52 12 2Z"/></svg>;
+            case "groq": 
+              return <svg viewBox="0 0 24 24" className="h-4 w-4 text-orange-500" fill="currentColor"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z"/></svg>;
+            default:
+              return null;
+          }
+        })()}
+      </div>
+      
+      <select 
+        value={config.llm_model || "openai"}
+        onChange={(e) => handleConfigChange("llm_model", e.target.value)}
+        className="w-full appearance-none rounded-lg border border-white/10 bg-[#121216] py-2.5 pl-10 pr-10 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors cursor-pointer"
+      >
+        <option value="openai">ChatGPT (OpenAI)</option>
+        <option value="gemini">Google Gemini</option>
+        <option value="groq">Groq (Llama 3)</option>
+      </select>
+      
+      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+   <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
+      LLM Model <span className="text-red-500">*</span>
+    </label>
+   <input 
+      required
+          className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white placeholder:text-gray-600"
+          placeholder="qwen/qwen3-32b or gemini-3-flash"
+          value={config.model_name || ""}
+          onChange={(e) => handleConfigChange("model_name", e.target.value)}
+        />
+  <CredentialSelector
+    service={config.llm_model || "openai"} 
+    selectedId={config.credential_id || ""}
+    onSelect={(id) => handleConfigChange("credential_id", id)}
+  />
 
-                    {/* 1. System Prompt (Always visible) */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
-                        System Prompt <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        rows={6}
-                        className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white resize-y font-mono placeholder:text-gray-600 focus:ring-1 focus:ring-indigo-500"
-                        placeholder="e.g., You are a helpful HR assistant. Answer questions using the provided tools."
-                        value={config.user_prompt || ""}
-                        onChange={(e) => handleConfigChange("user_prompt", e.target.value)}
-                      />
-                      <p className="text-[10px] text-gray-500">
-                        Define the agent's persona, rules, and specific goals.
-                      </p>
-                    </div>
+  <div className="flex items-start gap-3 rounded-md border border-indigo-500/30 bg-indigo-500/10 p-3 text-sm text-indigo-300">
+    <Info className="mt-0.5 h-4 w-4 shrink-0" />
+    <p>
+      Configure your AI Agent here. It will use the Chat Model you connect, 
+      and can access any Tools wired into its bottom handle.
+    </p>
+  </div>
 
-                    {/* 2. Tool Description (DYNAMIC: Only visible if it's a Sub-Agent) */}
-                    {isSubAgent && (
-                      <div className="space-y-3 rounded-lg border border-green-500/20 bg-green-500/5 p-4 animate-in fade-in slide-in-from-top-2">
-                        <label className="text-xs font-bold text-green-400 uppercase flex items-center gap-2">
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-500/20 text-[10px]">🛠️</span>
-                          Sub-Agent Tool Description
-                        </label>
-                        <textarea
-                          rows={3}
-                          className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white resize-y font-mono placeholder:text-gray-600 focus:ring-1 focus:ring-green-500"
-                          placeholder="e.g., Use this tool when you need to answer HR or payroll related questions."
-                          value={config.tool_spec || ""}
-                          onChange={(e) => handleConfigChange("tool_spec", e.target.value)}
-                        />
-                        <p className="text-[10px] text-gray-500">
-                          Because this agent is connected as a Tool to another AI, you can explicitly instruct the Supervisor on when to use it. If left blank, the system will use the System Prompt above as the description.
-                        </p>
-                      </div>
-                    )}
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
+      System Prompt <span className="text-red-500">*</span>
+    </label>
+    <textarea
+      rows={6}
+      className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white resize-y font-mono placeholder:text-gray-600 focus:ring-1 focus:ring-indigo-500"
+      placeholder="e.g., You are a helpful HR assistant. Answer questions using the provided tools."
+      value={config.user_prompt || ""}
+      onChange={(e) => handleConfigChange("user_prompt", e.target.value)}
+    />
+    <p className="text-[10px] text-gray-500">
+      Define the agent's persona, rules, and specific goals.
+    </p>
+  </div>
 
-                  </div>
+  {isSubAgent && (
+    <div className="space-y-3 rounded-lg border border-green-500/20 bg-green-500/5 p-4 animate-in fade-in slide-in-from-top-2">
+      <label className="text-xs font-bold text-green-400 uppercase flex items-center gap-2">
+        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-green-500/20 text-[10px]">🛠️</span>
+        Sub-Agent Tool Description
+      </label>
+      <textarea
+        rows={3}
+        className="w-full rounded-lg border border-white/10 bg-[#121216] px-4 py-2.5 text-sm text-white resize-y font-mono placeholder:text-gray-600 focus:ring-1 focus:ring-green-500"
+        placeholder="e.g., Use this tool when you need to answer HR or payroll related questions."
+        value={config.tool_spec || ""}
+        onChange={(e) => handleConfigChange("tool_spec", e.target.value)}
+      />
+      <p className="text-[10px] text-gray-500">
+        Because this agent is connected as a Tool to another AI, you can explicitly instruct the Supervisor on when to use it. If left blank, the system will use the System Prompt above as the description.
+      </p>
+    </div>
+  )}
+</div>
                 )}
 
 

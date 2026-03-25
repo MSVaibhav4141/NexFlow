@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..workflows.model import Workflow
+    from ..credentials.model import Credential
 
 cuid_gen = cuid_wrapper
 
@@ -19,5 +20,5 @@ class User(Base):
      password: Mapped[str] = mapped_column(String, nullable=False)
 
      workflows : Mapped[list["Workflow"]] = relationship("Workflow",back_populates='user')
-     
+     credentials: Mapped[list["Credential"]] = relationship("Credential", back_populates='user')
      

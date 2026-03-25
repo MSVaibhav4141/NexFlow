@@ -6,10 +6,10 @@ from sqlalchemy.dialects.postgresql import insert
 class WorkflowRepository:
 
     def get(self, db: Session, workflow_id: str, user_id:str):
-        return db.query(Workflow).filter(Workflow.id == workflow_id and Workflow.user_id == user_id).first()
+        return db.query(Workflow).filter(Workflow.id == workflow_id, Workflow.user_id == user_id).first()
 
-    def list(self, db: Session, skip: int = 0, limit: int = 100):
-        return db.query(Workflow).offset(skip).limit(limit).all()
+    def list(self, db: Session, user_id: str, skip: int = 0, limit: int = 100):
+        return db.query(Workflow).filter(Workflow.user_id == user_id).order_by(Workflow.updatedAt.desc()).offset(skip).limit(limit).all()
 
     def create(self, db: Session, workflow: WorkflowCreate):
         db_workflow = Workflow(**workflow.model_dump())

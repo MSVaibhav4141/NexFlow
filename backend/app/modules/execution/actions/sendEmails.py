@@ -1,13 +1,13 @@
+from app.modules.credentials.utils import get_credential_data
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Dict, Any
-# Assuming you have your parse_template function available
 from ..parser import parse_template 
 
 async def execute_send_email(node: Dict[str, Any], global_state: Dict[str, Any]) -> Dict[str, Any]:
     config: dict[Any, Any] = node.get("data", {}).get("config", {})
-    
+    print(config,"CRED")
     # 1. Parse all UI inputs
     operation = config.get("operation", "sendOnly")
     to_email = parse_template(config.get("toEmail", ""), global_state)
@@ -19,12 +19,9 @@ async def execute_send_email(node: Dict[str, Any], global_state: Dict[str, Any])
     execution_id = global_state.get("execution_id", "unknown")
     node_id = node.get("id", "")
 
-    # ==========================================
-    # 2. INJECT MAGIC LINKS (For Send & Wait)
-    # ==========================================
     if operation == "sendAndWait":
         # We append clickable approval links to the bottom of the email
-        # (You will route these to a FastAPI webhook we build later)
+        # ( will route these to a FastAPI webhook we build later)
         base_url = "http://localhost:8084/api/v0/execution/resume" 
         approve_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=approved"
         reject_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=rejected"
@@ -46,34 +43,41 @@ async def execute_send_email(node: Dict[str, Any], global_state: Dict[str, Any])
         else:
             message_body += append_text
 
-    # ==========================================
-    # 3. SEND THE EMAIL (Using Gmail SMTP as an example)
-    # ==========================================
-    # In production, use environment variables for these!
+
+    credential_id = config.get("credential_id", "")
+    if not credential_id:
+        return {"status": "failed", "error": "No credential selected for mail"}
+
+    cred_data = get_credential_data(credential_id)
+    print(cred_data,"DATTA")
+    smtp_email = cred_data.get("smtp_email", "")
+    smtp_password = cred_data.get("smtp_password", "")
+
+    if not smtp_password or not smtp_email:
+        return {"status": "failed", "error": "Email credential missing"}
+
+
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 587
-    SMTP_USERNAME = "vaibhavsingh4141@gmail.com" 
-    SMTP_PASSWORD = "uzyqovhspovuwihy" # Use a 16-character App Password, NOT your real password
+    SMTP_USERNAME = smtp_email
+    SMTP_PASSWORD = smtp_password# 
 
     msg = MIMEMultipart()
     msg['From'] = SMTP_USERNAME
     msg['To'] = str(to_email)
     msg['Subject'] = str(subject)
 
-    # Attach the body based on the selected format
     subtype = 'html' if email_format == 'html' else 'plain'
     msg.attach(MIMEText(str(message_body), subtype))
 
     try:
-        # Connect to server and send
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.send_message(msg)
         server.quit()
         
-        # 4. RETURN THE CORRECT STATUS
-        # If it's a wait operation, tell the DFS engine to pause!
+
         final_status = "paused" if operation == "sendAndWait" else "success"
         print(operation)
         return {

@@ -176,7 +176,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-[0_0_15px_rgba(99,102,241,0.4)]">
               <Zap className="h-4 w-4 text-white" fill="currentColor" />
             </div>
-            <span className="text-lg font-bold text-white tracking-wide">Nexus<span className="text-indigo-400">Flow</span></span>
+            <span className="text-lg font-bold text-white tracking-wide">Nex<span className="text-indigo-400">Flow</span></span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6">
             <Link href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Sign In</Link>

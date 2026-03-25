@@ -52,6 +52,15 @@ async def execution_websocket_endpoint(websocket: WebSocket, execution_id: str):
         # 3. Clean up if the user closes their browser
         ws_manager.disconnect(websocket, execution_id)
 
+@router.get("/")
+def get_executions(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(validate_token),
+    service: ExecutionService = Depends(get_service)
+):
+    executions = service.list_user_executions(db=db, user_id=user_id)
+    return executions
+
 @router.websocket("/ws/workflow/{workflow_id}")
 async def workflow_websocket_endpoint(websocket: WebSocket, workflow_id: str):
     await ws_manager.connect_workflow(websocket, workflow_id)

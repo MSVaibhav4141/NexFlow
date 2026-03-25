@@ -17,7 +17,9 @@ class ExecutionService:
         execution = self.repo.create_execution(db=db, workflow_id=workflow_id)
         return execution
 
-
+    def list_user_executions(self, db: Session, user_id: str):
+        return self.repo.get_user_executions(db=db, user_id=user_id)
+    
     async def run_execution(self, workflow_id:str, execution_id:str, trigger_node:str, trigger_data:dict[str,str]):
         print("Running execution")
         from app.db.db import SessionLocal
@@ -25,7 +27,7 @@ class ExecutionService:
 
         try:
             execution = self.repo.get_execution(db=db, execution_id=execution_id)
-            workflow  = db.query(Workflow).filter(Workflow.id == workflow_id).first()  #See how to do it correctly
+            workflow  = db.query(Workflow).filter(Workflow.id == workflow_id).first() 
 
             global_state:dict[str,Any] = {}
             
@@ -58,7 +60,7 @@ class ExecutionService:
             stack: list[str] = []
             if trigger_node in connection:
                 for next_id in reversed(connection[trigger_node]):
-                    stack.append(next_id["target"])
+                    stack.append(next_id["target"]) #
 
             global_state[trigger_node] = trigger_data
             print(connection, trigger_node)
@@ -79,7 +81,6 @@ class ExecutionService:
 
             visited_nodes: set[str] = set()
 
-            # Seed ALL trigger nodes so none can be re-entered mid-execution
             for node in workflow.nodes:
                 if node.get('type') in TRIGGER_NODE_TYPES:
                     visited_nodes.add(node['id'])
@@ -90,12 +91,11 @@ class ExecutionService:
                     current_node = stack.pop()
                     cn = current_node
                     
-                    # 2. THE FIX: Check if we've been here before to stop loops!
+                    # Check for stop looping
                     if current_node in visited_nodes:
-                        print(f"🛑 Cycle detected! Skipping {current_node} because it already ran.")
+                        print(f"Cycle detected! Skipping {current_node} because it already ran.")
                         continue
                     
-                    # Mark it as visited so it never runs again in this execution
                     visited_nodes.add(current_node)
 
                     print(f"Processing node: {current_node}")
@@ -137,11 +137,12 @@ class ExecutionService:
                             output = task_function(current_node_data, global_state)
                     else:
                         output = {"status": "skipped", "message": f"No task registered for {node_type}"}
-                    print(output)
+                    print(f"{output} yoyoyoyoyoyo")
                     status = output.get("status", "success")
 
                     global_state[current_node] = output
                     execution.state = global_state
+                    execution.status = status
                     
                     if status == "failed":
                         execution.status = 'failed'
@@ -152,8 +153,8 @@ class ExecutionService:
                             "node_id": current_node,
                             "output": output
                         })
-                        break # Stop the while loop
-                        
+                        break 
+
                     if status == "paused":
                         execution.status = 'paused'
                         db.commit()
@@ -164,7 +165,7 @@ class ExecutionService:
                             "output": output
                         })
                         print(f"Node {current_node} paused execution. Going to sleep.")
-                        return # 🚨 EXIT THE FUNCTION COMPLETELY!
+                        return
                     
                  
                     db.commit() 
@@ -191,12 +192,10 @@ class ExecutionService:
                             
 
                 except Exception as error:
-                    # FIX: Use current_node instead of checking the stack!
                     print(f"Node {cn} stopped due to {error}")
                     execution.status = 'failed'
                     execution.state = global_state
                     db.commit()
-                    # It's also good practice to broadcast the failure to the UI
                     await ws_manager.broadcast(execution_id, {
                         "type": "NODE_COMPLETED",
                         "status": "failed",
@@ -222,10 +221,10 @@ class ExecutionService:
             workflow  = db.query(Workflow).filter(Workflow.id == workflow_id).first()
 
             if not execution or not workflow:
-                print(f"❌ [RESUME ERROR] Aborting! Execution found: {execution is not None}, Workflow found: {workflow is not None}")
+                print(f" [RESUME ERROR] Aborting! Execution found: {execution is not None}, Workflow found: {workflow is not None}")
                 return
 
-            print("🔍 [RESUME] Step 2: Rebuilding Graph Connections...")
+            print(" [RESUME] Step 2: Rebuilding Graph Connections...")
             connection: dict[str, list[dict[str, str]]] = {}
             for edge in workflow.edges:
                 source = edge.get('source')   
@@ -238,7 +237,7 @@ class ExecutionService:
                     if edge_data not in connection[source]:
                         connection[source].append(edge_data)
 
-            print("🔍 [RESUME] Step 3: Loading state and broadcasting success to UI...")
+            print("[RESUME] Step 3: Loading state and broadcasting success to UI...")
             global_state = execution.state or {}
             global_state["__workflow_nodes"] = workflow.nodes
             global_state["__workflow_connections"] = connection
@@ -253,7 +252,7 @@ class ExecutionService:
             })
             await asyncio.sleep(0.5)
 
-            print("🔍 [RESUME] Step 4: Calculating Next Nodes (Evaluating Branching)...")
+            print("[RESUME] Step 4: Calculating Next Nodes (Evaluating Branching)...")
             stack: list[str] = []
             
             user_action = output_data.get("user_action") 
@@ -273,16 +272,13 @@ class ExecutionService:
                 elif is_conditional_node == nodes.get('handler'):
                     stack.append(nodes['target'])
 
-            # ==========================================
-            # 🚨 CHECK: Are there any nodes left to execute?
-            # ==========================================
             if not stack:
-                print("✅ [RESUME] No next nodes found. Marking workflow as COMPLETED!")
+                print(" [RESUME] No next nodes found. Marking workflow as COMPLETED!")
                 execution.status = "completed"
                 db.commit()
                 return
 
-            print(f"🚀 [RESUME] Step 5: Entering Engine Loop with stack: {stack}")
+            print(f" [RESUME] Step 5: Entering Engine Loop with stack: {stack}")
             cn = ""
             TRIGGER_NODE_TYPES = {'manualTrigger', 'webhookTrigger', 'formTrigger'}
             visited_nodes: set[str] = set()
@@ -294,7 +290,7 @@ class ExecutionService:
                 try:
                     current_node = stack.pop()
                     cn = current_node
-                    print(f"⚡ [RESUME] Processing node: {current_node}")
+                    print(f" [RESUME] Processing node: {current_node}")
 
                     await ws_manager.broadcast(execution_id, {
                         "type": "NODE_STARTED",
@@ -304,7 +300,7 @@ class ExecutionService:
 
                     current_node_data = next((n for n in workflow.nodes if n["id"] == current_node), None)
                     if not current_node_data:
-                        print(f"⚠️ [RESUME] Node {current_node} data not found in workflow. Skipping.")
+                        print(f" [RESUME] Node {current_node} data not found in workflow. Skipping.")
                         continue
                         
                     node_type = current_node_data.get("type","")
@@ -339,7 +335,7 @@ class ExecutionService:
                     execution.state = global_state
                     
                     if status == "failed":
-                        print(f"❌ [RESUME] Node {current_node} failed. Halting workflow.")
+                        print(f" [RESUME] Node {current_node} failed. Halting workflow.")
                         execution.status = 'failed'
                         db.commit()
                         await ws_manager.broadcast(execution_id, {
@@ -351,7 +347,7 @@ class ExecutionService:
                         break
                         
                     if status == "paused":
-                        print(f"⏸️ [RESUME] Node {current_node} requested pause. Saving state and sleeping.")
+                        print(f" [RESUME] Node {current_node} requested pause. Saving state and sleeping.")
                         execution.status = 'paused'
                         db.commit()
                         await ws_manager.broadcast(execution_id, {
@@ -382,7 +378,7 @@ class ExecutionService:
                             stack.append(nodes['target'])
 
                 except Exception as error:
-                    print(f"❌ [RESUME ERROR] Node {cn} crashed: {error}")
+                    print(f" [RESUME ERROR] Node {cn} crashed: {error}")
                     print(traceback.format_exc())
                     execution.status = 'failed'
                     execution.state = global_state
@@ -396,14 +392,11 @@ class ExecutionService:
                     break
 
         except Exception as error:
-            print(f"💥 [RESUME FATAL CRASH] Entire engine failed: {error}")
+            print(f" [RESUME FATAL CRASH] Entire engine failed: {error}")
             print(traceback.format_exc())
             
         finally:
-            # ==========================================
-            # 🧹 THE GUARANTEED CLEANUP
-            # ==========================================
-            print("🧹 [RESUME] Closing Database Session.")
+            print("Closing Database Session.")
             db.close()
 
   

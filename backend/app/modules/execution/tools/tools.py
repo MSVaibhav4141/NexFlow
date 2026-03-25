@@ -1,8 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import Optional # <--- Add this import
+from typing import Optional 
 
 class TelegramToolSchema(BaseModel):
-    # Change str to Optional[str] and add default=None
     message: Optional[str] = Field(
         default=None,
         description="The exact text message you want to send. Leave null if using the pre-configured node setting."
@@ -23,7 +22,6 @@ class EmailToolSchema(BaseModel):
     )
 
 class AgentAiToolSchema(BaseModel):
-    # This one DOES NOT get Optional, because the Sub-Agent ALWAYS needs a query to function!
     query: str = Field(
         description="The specific question, instruction, or task you want to delegate to this sub-agent."
     )

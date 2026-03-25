@@ -7,6 +7,7 @@ import { redis } from "@/lib/redis";
 import { api } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOption } from "@/lib/authOption";
+import { Workflow } from "@/components/workflows/workflow-context";
 
 
 export const verifyOtpRequest = async({otp, email}: {otp:string, email:string}) => {
@@ -101,3 +102,57 @@ export const saveForm = errorHandeler(
   }
 );
 
+
+export const createCredential = errorHandeler(
+  async ({ name, service, data }: { name: string; service: string; data: Record<string, string> }) => {
+    const { data: res, error } = await api.POST("/api/v0/credentials", {
+      body: { name, service, data },
+    });
+    return { data: res, error };
+  }
+);
+
+export const fetchCredentials = errorHandeler(
+  async ({ service }: { service: string }) => {
+    const { data, error } = await api.GET("/api/v0/credentials/{service}", {
+      params: { path: { service } },
+    });
+    return { data, error };
+  }
+);
+
+export const deleteCredential = errorHandeler(
+  async ({ id }: { id: string }) => {
+    const { data, error } = await api.DELETE("/api/v0/credentials/{credential_id}", {
+      params: { path: { credential_id: id } },
+    });
+    return { data, error };
+  }
+);
+
+export async function getWorkflowsAction() {
+  try {
+    const {data , error} = await api.GET("/api/v0/workflows/", {
+      method: "GET"
+    });
+
+    if (error) {
+      throw new Error("Failed to fetch workflows");
+    }
+
+    return { success: true, data: data as Workflow[] };
+  } catch (error: any) {
+    console.error("Action Error:", error);
+    return { success: false, data: [], error: error.message };
+  }
+}
+
+export async function getExecutionsAction() {
+  try {
+    const { data, error } = await api.GET("/api/v0/execution/");
+    if (error) throw new Error("Failed to fetch executions");
+    return { success: true, data: data };
+  } catch (error: any) {
+    return { success: false, data: [], error: error.message };
+  }
+}

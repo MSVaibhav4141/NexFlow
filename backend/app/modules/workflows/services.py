@@ -10,7 +10,10 @@ class WorkflowServices:
     def update_workflow(self, db:Session, workflow_payload:WorkflowUpdate):    
         self.repo.upsert(db=db, workflow_payload=workflow_payload)
         return WorkflowUpdateMessage(success=True, mssg="Workflow Successfully Saved")
-
+    
+    def list_workflows(self, db: Session, user_id: str):
+        return self.repo.list(db=db, user_id=user_id)
+    
     def get_by_id(self, db:Session, wokflow_id:str, user_id:str):
         workflow = self.repo.get(db=db, workflow_id=wokflow_id, user_id=user_id)
 

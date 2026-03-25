@@ -4,9 +4,9 @@ from .actions.ai_agent import execute_ai_agent
 from .actions.sendEmails import execute_send_email
 # from app.config import settings
 from typing import Any, Dict
+from app.modules.credentials.utils import get_credential_data
 
 
-#All actions
     
 def if_else_exec(node:dict[str, Any], global_state:dict[str,Any])-> Dict[str, Any]:
 
@@ -54,11 +54,16 @@ async def execute_send_telegram(node: Dict[str, Any], global_state: Dict[str, An
     message_text = parse_template(raw_message, global_state)
     operation = config.get("operation", "sendOnly")
     
-    bot_token = "8489443586:AAGkm42wnJvXKmmltgrwSlW4lfJ1bx8Yp2w"
-    
+    credential_id = config.get("credential_id", "")
+    if not credential_id:
+        return {"status": "failed", "error": "No credential selected for Telegram"}
+
+    cred_data = get_credential_data(credential_id)
+    bot_token = cred_data.get("bot_token", "")
+
     if not bot_token:
-        return {"status": "failed", "error": "Missing Telegram Bot Token"}
-    
+        return {"status": "failed", "error": "Telegram credential missing bot_token"}
+
     if not isinstance(chat_id, str):
         return {"status": "failed", "error": "Missing chat id"}
 
@@ -87,10 +92,9 @@ async def execute_send_telegram(node: Dict[str, Any], global_state: Dict[str, An
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             response = await client.post(url, json=payload)
-            response.raise_for_status() # If Telegram returns a 400 or 500 error, this trips the exception
+            response.raise_for_status() 
             data = response.json()
             
-            # Determine the status based on the operation
             final_status = "paused" if operation == "sendAndWait" else "success"
             
             return {

@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { createId } from "@paralleldrive/cuid2";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [toggleButton, setToogle] = useState(false)
   const navItems = [  
-    { name: "Overview", href: "/dashboard", icon: Home },
     { name: "Workflows", href: "/workflows", icon: FolderKanban },
     { name: "AI Agents", href: "/ai-agents", icon: Bot, isNew: true },
   ];
@@ -31,6 +31,7 @@ export function Sidebar() {
     { name: "Usage & Insights", href: "/insights", icon: BarChart3 },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
+  const workflowId = createId()
 
   return (
     <aside className="flex h-screen w-[260px] flex-col border-r border-white/5 bg-[#0a0a0c]/95 backdrop-blur-xl">
@@ -39,7 +40,7 @@ export function Sidebar() {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold tracking-wide text-sm">AutomateX</span>
+          <span className="font-semibold tracking-wide text-sm">Nexflow</span>
         </Link>
         <div className="flex items-center gap-1">
           <button className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-white/10 hover:text-white">
@@ -52,10 +53,12 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 py-2">
+        <Link href={`/workflows/${workflowId}`}>
         <button className="flex w-full items-center gap-2 rounded-lg bg-white/5 border border-white/5 px-3 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/10 hover:border-white/10">
           <Plus className="h-4 w-4" />
           New Workflow
         </button>
+        </Link>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3 py-4 text-sm font-medium text-gray-400">

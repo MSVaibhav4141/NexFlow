@@ -19,8 +19,6 @@ class ExecutionRepository:
         webhook = db.query(Webhook).filter_by(id=webhook_id).first()
         return webhook
     
-# app/modules/execution/repository.py - add these methods
-
     def save_form_config(self, db: Session, workflow_id: str, node_id: str, 
                          form_elements: list[str], form_title: str, 
                          form_description: str, account_name: str) -> FormConfig:
@@ -49,3 +47,9 @@ class ExecutionRepository:
 
     def get_form_config(self, db: Session, form_id: str) -> FormConfig | None:
         return db.query(FormConfig).filter_by(id=form_id).first()
+    
+    def get_user_executions(self, db: Session, user_id: str):
+        from app.modules.workflows.model import Workflow
+        return db.query(Execution).join(Workflow).filter(
+            Workflow.user_id == user_id
+        ).order_by(Execution.createdAt.desc()).limit(100).all()

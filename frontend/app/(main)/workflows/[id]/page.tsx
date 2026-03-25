@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { getServerSession } from "next-auth";
 import { authOption } from "@/lib/authOption";
 export const metadata = {
-  title: "Editing Workflow | AutomateX",
+  title: "Editing Workflow | Nexflow",
 };
 
 export default async function SingleWorkflowPage({

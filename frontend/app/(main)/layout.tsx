@@ -1,7 +1,7 @@
 import { Sidebar } from "../../components/auth/dashboard/Sidebar";
 
 export const metadata = {
-  title: "Dashboard | AutomateX",
+  title: "Dashboard | Nexflow",
 };
 
 export default function DashboardLayout({

@@ -10,11 +10,12 @@ router = APIRouter(prefix="/workflows", tags=["Workflows"])
 
 @router.get("/", response_model=list[WorkflowResponse])
 def get_workflows(
-    is_auth:str = Depends(validate_token),
-    db:Session = Depends(get_db)):
-        pass
-    # workflows = workflow_action.list(db=db) 
-    # return  workflows
+    user_id: str = Depends(validate_token),
+    db: Session = Depends(get_db),
+    service: WorkflowServices = Depends(workflow_service)
+):
+    workflows = service.list_workflows(db=db, user_id=user_id) 
+    return workflows
 
 @router.put("/workflow", response_model=WorkflowUpdateMessage)
 def upsert_workflow(workflow_payload:WorkflowUpdate,

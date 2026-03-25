@@ -57,8 +57,6 @@ def build_langchain_tool_from_node(node_id: str, node_type: str, task_function: 
         except Exception as e:
             return f"Error executing tool: {str(e)}"
 
-    # 2. Map the node type to its Pydantic Schema and Description
-    # Note: We replace dashes in the node_id because LLM tool names cannot have dashes.
     safe_tool_name = f"{node_type}_{node_id.replace('-', '_')}"
     
     def sync_tool_wrapper(**kwargs: Any) -> str:
