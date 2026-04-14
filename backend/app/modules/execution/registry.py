@@ -46,7 +46,12 @@ def if_else_exec(node:dict[str, Any], global_state:dict[str,Any])-> Dict[str, An
 async def execute_send_telegram(node: Dict[str, Any], global_state: Dict[str, Any]) -> Dict[str, Any]:
 
     config:dict[Any,Any] = node.get("data", {}).get("config", {})
-    
+    execution_id = global_state.get("execution_id", "unknown")
+    node_id = node.get("id", "")
+    base_url = "https://nexflow-ord3.onrender.com/api/v0/execution/resume" 
+    approve_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=approved"
+    reject_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=rejected"
+        
     raw_chat_id = config.get("chatId", "")
     raw_message = config.get("message", "")
     
@@ -83,8 +88,8 @@ async def execute_send_telegram(node: Dict[str, Any], global_state: Dict[str, An
         payload["reply_markup"] = {
             "inline_keyboard": [
                 [
-                    {"text": approve_text, "callback_data": f"approve_{node['id']}"},
-                    {"text": reject_text, "callback_data": f"reject_{node['id']}"}
+                   {"text": approve_text, "url": approve_link},
+                   {"text": reject_text, "url": reject_link}   
                 ]
             ]
         }
