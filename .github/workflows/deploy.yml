@@ -1,0 +1,31 @@
+name: Deploy NexFlow Frontend to Azure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into Azure and Deploy with Docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 👇 NEW: Navigate to the repo, then specifically into the frontend folder
+            cd ~/your-nexflow-repo
+            git pull origin main
+            
+            cd frontend
+            
+            # Rebuild the Docker image and restart the container
+            sudo docker compose up --build -d
+            
+            # Clean up old Docker images
+            sudo docker image prune -f
