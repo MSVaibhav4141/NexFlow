@@ -55,7 +55,7 @@ import NextAuth from "next-auth"
 //         secure: process.env.NODE_ENV === 'production',
 //         // THIS IS THE MAGIC FIX: The leading dot allows all subdomains to read the cookie
 //         domain: process.env.NODE_ENV === 'production' 
-//           ? '.nexflow.vms.xyz' 
+//           ? '.nexflow.vms.com' 
 //           : '.localhost.direct'
 //       }
 //     }

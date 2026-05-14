@@ -20,8 +20,6 @@ async def execute_send_email(node: Dict[str, Any], global_state: Dict[str, Any])
     node_id = node.get("id", "")
 
     if operation == "sendAndWait":
-        # We append clickable approval links to the bottom of the email
-        # ( will route these to a FastAPI webhook we build later)
         base_url = "http://localhost:8084/api/v0/execution/resume" 
         approve_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=approved"
         reject_link = f"{base_url}?execution_id={execution_id}&node_id={node_id}&action=rejected"

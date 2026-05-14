@@ -47,9 +47,7 @@ const handleWsMessage = useCallback((event: MessageEvent) => {
   }
 }, []); 
 
-  // ── Shared WS connector ────────────────────────────────────────────────
   const connectToExecution = useCallback((execId: string) => {
-    // Close any existing execution WS first
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -103,7 +101,6 @@ const handleWsMessage = useCallback((event: MessageEvent) => {
         clearStatuses();
         setNodeOutputs({});
         setIsRunning(true);
-        // ✅ Same direct connection — no re-render delay
         connectToExecution(payload.execution_id);
         setExecutionId(payload.execution_id);
       }
@@ -113,7 +110,6 @@ const handleWsMessage = useCallback((event: MessageEvent) => {
     return () => ws.close();
   }, [workflowId]);
 
-  // ── 3. Cleanup on unmount ──────────────────────────────────────────────
   useEffect(() => {
     return () => wsRef.current?.close();
   }, []);

@@ -35,7 +35,7 @@ export const sendOtpOverEmail = errorHandeler(
       const resend = new Resend(process.env.RESEND_API_KEY);
       
       const { data: resendData, error } = await resend.emails.send({
-        from: 'Nexflow <noreply@nexflow.vaibhavr.xyz>', // 🚨 Update to your verified domain later!
+        from: 'Nexflow <noreply@nexflow.vaibhavr.com>', // 🚨 Update to your verified domain later!
         to: [toEmail],
         subject: `${otp} is your verification code`,
         react: OtpEmailTemplate({ otp }),

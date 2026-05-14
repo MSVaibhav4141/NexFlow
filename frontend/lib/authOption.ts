@@ -55,7 +55,7 @@ import { api } from "@/lib/api";
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         domain: process.env.NODE_ENV === 'production' 
-          ? '.nexflow.vaibhavr.xyz' 
+          ? '.nexflow.vaibhavr.com' 
           : '.localhost.direct'
       }
     }

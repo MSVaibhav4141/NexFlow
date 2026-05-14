@@ -271,7 +271,7 @@ const handleFinalSubmit = async (e: React.FormEvent) => {
               placeholder="Account Name"
               className="w-50 rounded-md border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
               />
-            <span className="text-white">.my-workflow.xyz</span>
+            <span className="text-white">.my-workflow.com</span>
             </span>
           </div>
 

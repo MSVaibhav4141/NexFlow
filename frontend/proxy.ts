@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
   const path = url.pathname;
   
   const isProd = process.env.NODE_ENV === "production";
-  const baseDomain = isProd ? "nexflow.vaibhavr.xyz" : "localhost.direct:3002";
+  const baseDomain = isProd ? "nexflow.vaibhavr.com" : "localhost.direct:3002";
   const protocol = isProd ? "https" : "http";
   
   const subdomain = hostname.replace(baseDomain, "").replace(".", "");
@@ -18,7 +18,6 @@ export async function proxy(request: NextRequest) {
 
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
-  // --- THE ROUTING LOGIC ---
 
   if (!token) {
     if (!isPublicPath && !isAllowedPath) {

@@ -82,9 +82,7 @@ setAiHighlight: (sourceId, targetId, isActive) => set((state) => {
       return {
         ...e,
         animated: isActive,
-        // ✅ Use className instead of style for better CSS control
         className: isActive ? 'ai-path-active' : '',
-        // Keep style as an empty object when active to clear defaults
         style: isActive ? { strokeWidth: 3 } : {}, 
       };
     }

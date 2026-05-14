@@ -14,8 +14,7 @@ export default async function SingleWorkflowPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // TODO: In the future, you would fetch your initial nodes/edges from the DB here
-  // const workflowData = await getWorkflowById(params.workflowId);
+
 
   const workflow = await params
 

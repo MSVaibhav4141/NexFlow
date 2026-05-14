@@ -41,7 +41,7 @@ async def execute_ai_agent(node: dict[str, Any], global_state: dict[str, Any]) -
         node_type = str(node_info['type'])
         tool_func = TASK_REGISTRY[node_type]
         user_data: dict[str, Any] = node_info.get('data', {}).get('config', {}) 
-        
+            
         tool = build_langchain_tool_from_node(
             node_id=node_id, 
             node_type=node_type, 

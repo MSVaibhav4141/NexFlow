@@ -17,10 +17,13 @@ async def start_execution(
     payload: ExecutionStartRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    service: ExecutionService = Depends(get_service)
+    service: ExecutionService = Depends(get_service),
+    user: str = Depends(validate_token)
+
 ):
     # 1. Create the blank execution record in the database
     execution = service.create_execution(db=db, workflow_id=payload.workflow_id)
+    tenant_id = db.query(User.accountName).filter_by(id=user).scalar()
 
     # 2. Tell FastAPI to run the heavy engine logic in the background
     background_tasks.add_task(
@@ -28,7 +31,8 @@ async def start_execution(
         execution_id=execution.id, 
         workflow_id=payload.workflow_id,
         trigger_node=payload.trigger_node_id,
-        trigger_data=payload.trigger_data
+        trigger_data=payload.trigger_data,
+        tenant_id=tenant_id
     )
 
     # 3. Immediately respond to Next.js with the ID
@@ -94,10 +98,10 @@ async def resume_workflow_webhook(\
     node_data = state.get(node_id, {})
     node_data.update({
         "status": "success", 
-        "user_action": action, # This will be "approved" or "rejected"
+        "user_action": action, 
         "human_responded": True
     })
-    # We simulate a "Success" output from the node, but inject the user's choice
+    
     state[node_id] = {
         "status": "success", 
         "user_action": action, # "approved" or "rejected"
@@ -108,8 +112,7 @@ async def resume_workflow_webhook(\
     execution.status = 'running'
     db.commit()
 
-    # 3. Wake the engine back up in the background!
-    # We don't want the user's browser to hang while the rest of the workflow finishes.
+    
     background_tasks.add_task(
         service.resume_execution, 
         workflow_id=execution.workflow_id,
@@ -161,7 +164,7 @@ async def save_webhook_config(
     db.commit()
     db.refresh(webhook)
 
-    frontend_domain = f"https://{tenant_id}.nexflow.vaibhavr.xyz"
+    frontend_domain = f"https://{tenant_id}.nexflow.vaibhavr.com"
     full_webhook_url = f"{frontend_domain}/api/webhook/{webhook.id}"
 
     return {

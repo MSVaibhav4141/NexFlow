@@ -81,7 +81,7 @@ AI agents are first-class nodes. An `agentAi` node accepts three named input han
 | Trigger | How It Works |
 |---------|-------------|
 | **Manual** | Button in the canvas calls `/execution/start`, execution ID returned immediately, WebSocket connects synchronously before the first event fires (no re-render delay) |
-| **Webhook** | Unique per-tenant URL scoped to `accountName.nexflow.vaibhavr.xyz`. Accepts GET or POST. On hit, creates an execution and broadcasts `EXECUTION_STARTED` on the workflow-level WebSocket channel so any open canvas tabs update automatically |
+| **Webhook** | Unique per-tenant URL scoped to `accountName.nexflow.vaibhavr.com`. Accepts GET or POST. On hit, creates an execution and broadcasts `EXECUTION_STARTED` on the workflow-level WebSocket channel so any open canvas tabs update automatically |
 | **Form** | Users define a form schema in the node modal. Clicking "Make Live" saves the schema and generates a public URL. Submissions POST to the backend, sanitize field keys, and trigger the workflow — same real-time feedback as webhooks |
 
 <img width="1731" height="838" alt="Screenshot 2026-03-25 213056" src="https://github.com/user-attachments/assets/5dffd1c1-853a-49c4-ae74-76c099352b5a" />
@@ -125,7 +125,7 @@ In the node modal, a `CredentialSelector` component fetches available credential
 
 ### Multi-Tenancy
 
-NexFlow uses logical multi-tenancy rather than container-per-user isolation. Each user registers with a unique `accountName`. Webhook and form URLs are scoped to that account name via subdomain (`{accountName}.nexflow.vaibhavr.xyz`), and all credential, webhook, and form records are filtered by `user_id` or `accountName` at the query level.
+NexFlow uses logical multi-tenancy rather than container-per-user isolation. Each user registers with a unique `accountName`. Webhook and form URLs are scoped to that account name via subdomain (`{accountName}.nexflow.vaibhavr.com`), and all credential, webhook, and form records are filtered by `user_id` or `accountName` at the query level.
 
 ---
 

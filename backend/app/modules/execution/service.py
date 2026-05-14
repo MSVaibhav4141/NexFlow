@@ -34,6 +34,7 @@ class ExecutionService:
             if not execution or not workflow:
                 return
             
+            account_name = workflow.user.accountName
             #creating adjacency list
             all_edges = workflow.edges
             connection:dict[str,list[dict[str,str]]] = {}
@@ -56,6 +57,7 @@ class ExecutionService:
             global_state["__workflow_nodes"] = workflow.nodes
             global_state["__workflow_connections"] = connection
             global_state["execution_id"] = execution_id
+            global_state["account_name"] = account_name
             print(all_edges)
             stack: list[str] = []
             if trigger_node in connection:
@@ -256,7 +258,7 @@ class ExecutionService:
             stack: list[str] = []
             
             user_action = output_data.get("user_action") 
-            if user_action:
+            if user_action: 
                 is_conditional_node = "true" if user_action == "approved" else "false"
                 print(f"   -> Human action '{user_action}' mapped to branch handler '{is_conditional_node}'")
             else:
@@ -465,7 +467,7 @@ class ExecutionService:
             account_name=tenant_id
         )
 
-        frontend_domain = f"https://{tenant_id}.nexflow.vaibhavr.xyz"
+        frontend_domain = f"https://{tenant_id}.nexflow.vaibhavr.com"
         form_url = f"{frontend_domain}/form/{form.id}"
 
         return {"form_id": form.id, "url": form_url}
@@ -478,7 +480,6 @@ class ExecutionService:
 
         sanitized = {k.replace(" ", "_"): v for k, v in field_values.items()}
         trigger_data = {"fields": sanitized, "form_id": form_id}
-        # Wrap submission data the same way webhook does
         trigger_data:dict[str,Any] = {"fields": field_values, "form_id": form_id}
 
         execution = Execution(

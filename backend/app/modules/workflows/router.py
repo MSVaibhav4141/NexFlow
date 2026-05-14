@@ -15,7 +15,7 @@ def get_workflows(
     service: WorkflowServices = Depends(workflow_service)
 ):
     workflows = service.list_workflows(db=db, user_id=user_id) 
-    return workflows
+    return workflows    
 
 @router.put("/workflow", response_model=WorkflowUpdateMessage)
 def upsert_workflow(workflow_payload:WorkflowUpdate,
