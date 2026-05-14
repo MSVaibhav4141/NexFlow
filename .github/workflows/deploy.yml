@@ -19,7 +19,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # 👇 NEW: Navigate to the repo, then specifically into the frontend folder
-            cd ~/your-nexflow-repo
+            cd ~/NexFlow
             git pull origin main
             
             cd frontend
