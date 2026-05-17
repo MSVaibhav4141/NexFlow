@@ -23,7 +23,6 @@ async def start_execution(
 ):
     # 1. Create the blank execution record in the database
     execution = service.create_execution(db=db, workflow_id=payload.workflow_id)
-    tenant_id = db.query(User.accountName).filter_by(id=user).scalar()
 
     # 2. Tell FastAPI to run the heavy engine logic in the background
     background_tasks.add_task(
@@ -32,7 +31,6 @@ async def start_execution(
         workflow_id=payload.workflow_id,
         trigger_node=payload.trigger_node_id,
         trigger_data=payload.trigger_data,
-        tenant_id=tenant_id
     )
 
     # 3. Immediately respond to Next.js with the ID
