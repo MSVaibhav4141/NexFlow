@@ -11,6 +11,7 @@ def validate_token(authorization:str =  Header(None)):
 
         decoded = jwt.decode(jwt=auth, key=settings.JWT_SECRET,algorithms=["HS256"],verify=True) #type: ignore
         return decoded['sub']
-    except Exception:
+    except Exception as e:
+        print(f"Token validation failed: {e}")
         raise HTTPException(status_code=401, detail="Unauthorized")
     
